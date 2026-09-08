@@ -22,9 +22,9 @@ const initialInsights = [
 
 // Subscriptions
 const initialSubscriptions = [
-  { name: 'Netflix', note: 'Entertainment · renews 14 Sep', value: '$15.99' },
-  { name: 'U Gym', note: 'Fitness · renews 02 Sep', value: '$39.00' },
-  { name: 'Claude Pro', note: 'Not opened in 40 days', value: '$25' },
+  { name: 'Streamly Plus', note: 'Entertainment · renews 14 Oct', value: '$15.99' },
+  { name: 'FitLoop Gym', note: 'Fitness · renews 02 Oct', value: '$39.00' },
+  { name: 'CloudNote', note: 'Not opened in 40 days', value: '$7.99' },
 ];
 
 // Bills
@@ -67,7 +67,7 @@ function App() {
         {/* Top Header */}
         <header className="dashboard-header">
           <div>
-            <h1 className="header-title">Welcome back, SAHAJ</h1>
+            <h1 className="header-title">Welcome back, Kim!</h1>
             <p className="header-subtitle">Your AI financial coach — October overview</p>
           </div>
           <button type="button" className="btn-primary">
