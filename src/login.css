@@ -431,55 +431,6 @@
   to { transform: rotate(360deg); }
 }
 
-/* Divider */
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.divider-line {
-  flex: 1;
-  height: 1px;
-  background-color: rgba(255, 255, 255, 0.07);
-}
-
-.divider-text {
-  font-size: 12px;
-  color: var(--text-muted);
-  white-space: nowrap;
-  font-weight: 500;
-}
-
-/* Social buttons */
-.social-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.btn-social {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background-color: var(--bg-card);
-  border: 1.5px solid rgba(255, 255, 255, 0.07);
-  border-radius: 14px;
-  padding: 12px 16px;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: var(--font-family);
-  color: var(--text-main);
-  cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s, transform 0.15s;
-}
-
-.btn-social:hover {
-  background-color: var(--bg-secondary);
-  border-color: rgba(255, 255, 255, 0.12);
-  transform: translateY(-1px);
-}
 
 /* Sign up prompt */
 .signup-prompt {
