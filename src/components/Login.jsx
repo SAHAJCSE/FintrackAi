@@ -102,8 +102,6 @@ function Login({ onLogin }) {
             </div>
 
             <form className="login-form" onSubmit={handleSubmit} noValidate>
-              
-
               {/* Email */}
               <div className="form-group">
                 <label htmlFor="login-email" className="form-label">Email address</label>
