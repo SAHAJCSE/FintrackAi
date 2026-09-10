@@ -4,55 +4,58 @@ import Sidebar from './components/Sidebar';
 import StatTile from './components/StatTile';
 import Panel from './components/Panel';
 import ListRow from './components/ListRow';
+import LatestTransactions from './components/LatestTransactions';
 
 // Spending categories tiles
 const initialTiles = [
-  { label: 'Rent', amount: '$1410.00', colorClass: 'tile-blue' },
-  { label: 'Transport', amount: '$410.00', colorClass: 'tile-pink' },
-  { label: 'Health', amount: '$325.90', colorClass: 'tile-lime' },
-  { label: 'Groceries', amount: '$290.13', colorClass: 'tile-amber' },
+  { label: 'Rent', amount: '₹15,000', colorClass: 'tile-blue' },
+  { label: 'Transport', amount: '₹4,500', colorClass: 'tile-pink' },
+  { label: 'Health', amount: '₹3,200', colorClass: 'tile-lime' },
+  { label: 'Groceries', amount: '₹8,500', colorClass: 'tile-amber' },
 ];
 
 // AI insights
 const initialInsights = [
-  'You spent 72% of your monthly budget. Nice pace — keep dining under $200.',
+  'You spent 72% of your monthly budget. Nice pace — keep dining under ₹2,000.',
   'Dining out is 38% above your 3-month average this week.',
-  'Moving $200 on payday keeps your savings goal on track.',
+  'Moving ₹5,000 on payday keeps your savings goal on track.',
 ];
 
 // Subscriptions
 const initialSubscriptions = [
-  { name: 'Netflix', note: 'Entertainment · renews 14 Sep', value: '$15.99' },
-  { name: 'U Gym', note: 'Fitness · renews 02 Sep', value: '$39.00' },
-  { name: 'Claude Pro', note: 'Not opened in 40 days', value: '$25' },
+  { name: 'JioCinema Premium', note: 'Entertainment · renews 14 Oct', value: '₹149' },
+  { name: 'Cult.fit Gym', note: 'Fitness · renews 02 Oct', value: '₹1,499' },
+  { name: 'Hotstar Super', note: 'Not opened in 40 days', value: '₹299' },
 ];
 
 // Bills
 const initialBills = [
-  { name: 'Rent', note: 'Due 03 Oct', value: '$1450' },
-  { name: 'Electricity', note: 'Due 09 Oct', value: '$88' },
-  { name: 'Internet', note: 'Due 17 Oct', value: '$52' },
+  { name: 'House Rent', note: 'Due 03 Oct', value: '₹15,000' },
+  { name: 'Electricity (BSES)', note: 'Due 09 Oct', value: '₹1,850' },
+  { name: 'Airtel Broadband', note: 'Due 17 Oct', value: '₹999' },
 ];
 
 // Investments
 const initialInvestments = [
-  { name: 'Index Diversify Fund', note: 'Balanced · moderate risk', value: '6.4% / yr', isPositive: true },
-  { name: 'Tech Momentum ETF', note: 'Growth · higher risk', value: '11.2% / yr', isPositive: true },
-  { name: 'Bond Ladder', note: 'Income · low risk', value: '4.1% / yr', isPositive: true },
+  { name: 'Nifty 50 Index Fund', note: 'Balanced · moderate risk', value: '12.4% / yr', isPositive: true },
+  { name: 'Tata Digital India Fund', note: 'Growth · higher risk', value: '18.2% / yr', isPositive: true },
+  { name: 'HDFC Corporate Bond', note: 'Income · low risk', value: '7.1% / yr', isPositive: true },
 ];
 
 // Transactions
 const initialTransactions = [
-  { name: 'Figma', note: '1 day ago', value: '-$300.00' },
-  { name: 'Payment received', note: '1 day ago', value: '+$490.00' },
-  { name: 'Webflow', note: '1 day ago', value: '-$41.00' },
-  { name: 'Airbnb', note: '4 days ago', value: '-$241.65' },
-  { name: 'Spotify', note: '8 days ago', value: '-$9.00' },
+  { id: 1, merchant: 'Swiggy', amount: -850, category: 'Food', date: '10 Sep 2026' },
+  { id: 2, merchant: 'Salary', amount: 45000, category: 'Income', date: '01 Sep 2026' },
+  { id: 3, merchant: 'Flipkart', amount: -1299, category: 'Shopping', date: '28 Aug 2026' },
+  { id: 4, merchant: 'Hotstar', amount: -499, category: 'Entertainment', date: '25 Aug 2026' },
+  { id: 5, merchant: 'Ola Cabs', amount: -350, category: 'Transport', date: '22 Aug 2026' },
+  { id: 6, merchant: 'Freelance Work', amount: 12000, category: 'Income', date: '18 Aug 2026' },
 ];
 
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [transactions, setTransactions] = useState(initialTransactions);
 
   if (!isLoggedIn) {
     return <Login onLogin={() => setIsLoggedIn(true)} />;
@@ -62,12 +65,11 @@ function App() {
     <div className="dashboard-container">
       <Sidebar />
 
-
       <main className="main-content">
         {/* Top Header */}
         <header className="dashboard-header">
           <div>
-            <h1 className="header-title">Welcome back, SAHAJ</h1>
+            <h1 className="header-title">Welcome back, Rohan!</h1>
             <p className="header-subtitle">Your AI financial coach — October overview</p>
           </div>
           <button type="button" className="btn-primary">
@@ -93,15 +95,15 @@ function App() {
               </Panel>
 
               <Panel title="Total balance">
-                <p className="balance-number">$12,530.00</p>
+                <p className="balance-number">₹1,25,300.00</p>
                 <div className="balance-details">
                   <div>
                     <p className="detail-label">Money in</p>
-                    <p className="detail-value text-success">+$590.00</p>
+                    <p className="detail-value text-success">+₹45,000.00</p>
                   </div>
                   <div>
                     <p className="detail-label">Money out</p>
-                    <p className="detail-value text-danger">-$660.13</p>
+                    <p className="detail-value text-danger">-₹18,650.00</p>
                   </div>
                 </div>
               </Panel>
@@ -134,9 +136,9 @@ function App() {
             {/* Budget Prediction & Detected Subscriptions */}
             <div className="two-cards-row">
               <Panel title="Budget prediction">
-                <p className="prediction-amount">$2,410</p>
+                <p className="prediction-amount">₹24,500</p>
                 <p className="prediction-sub">Estimated spending for the next 31 days.</p>
-                <p className="prediction-warning">Possible $140 overspend on dining by week 5.</p>
+                <p className="prediction-warning">Possible ₹1,500 overspend on dining by week 5.</p>
               </Panel>
 
               <Panel title="Detected subscriptions" action="Show more">
@@ -146,7 +148,7 @@ function App() {
                   ))}
                 </div>
                 <p className="panel-footer-note">
-                  Cancel 1 unused subscription to save $7.99 a month.
+                  Cancel 1 unused subscription to save ₹299 a month.
                 </p>
               </Panel>
             </div>
@@ -170,13 +172,7 @@ function App() {
               </div>
             </Panel>
 
-            <Panel title="Latest transactions" action="Show more">
-              <div className="list-container">
-                {initialTransactions.map((item) => (
-                  <ListRow key={item.name} {...item} />
-                ))}
-              </div>
-            </Panel>
+            <LatestTransactions transactions={transactions} />
 
             <Panel title="Voice assistant">
               <p className="voice-text">

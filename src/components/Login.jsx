@@ -89,12 +89,12 @@ function Login({ onLogin }) {
 
             <div className="brand-testimonial">
               <p className="testimonial-quote">
-                "FinTrack AI helped me save $3,200 in just 4 months. The insights are incredible."
+                "FinTrack AI helped me save ₹25,000 in just 4 months. The insights are incredible."
               </p>
               <div className="testimonial-author">
-                <div className="testimonial-avatar">K</div>
+                <div className="testimonial-avatar">R</div>
                 <div>
-                  <p className="testimonial-name">Kim Richards</p>
+                  <p className="testimonial-name">Rohan Sharma</p>
                   <p className="testimonial-role">Product Designer</p>
                 </div>
               </div>
