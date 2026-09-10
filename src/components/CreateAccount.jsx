@@ -175,10 +175,7 @@ function CreateAccount({ onLogin }) {
 
               {/* Password */}
               <div className="form-group">
-                <div className="label-row">
-                  <label htmlFor="login-password" className="form-label">Password</label>
-                  <button type="button" className="forgot-link">Forgot password?</button>
-                </div>
+                <label htmlFor="create-password" className="form-label">Password</label>
                 <div className="input-wrapper">
                   <span className="input-icon">
                     <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -187,14 +184,14 @@ function CreateAccount({ onLogin }) {
                     </svg>
                   </span>
                   <input
-                    id="login-password"
+                    id="create-password"
                     type={showPassword ? 'text' : 'password'}
                     name="password"
                     className="form-input"
                     placeholder="••••••••"
                     value={password}
                     onChange={handlePasswordChange}
-                    autoComplete="current-password"
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"
@@ -274,17 +271,17 @@ function CreateAccount({ onLogin }) {
                 disabled={loading}
               >
                 {loading ? (
-                  <><span className="spinner" />Signing in…</>
+                  <><span className="spinner" />Creating account…</>
                 ) : (
-                  'Sign in'
+                  'Create account'
                 )}
               </button>
             </form>
 
             <p className="signup-prompt">
-              Don't have an account?{' '}
-              <button type="button" className="signup-link" id="signup-link-btn" onClick={() => window.location.href = '/create-account'}>
-                Create one free
+              Already have an account?{' '}
+              <button type="button" className="signup-link" id="signin-link-btn" onClick={() => window.location.href = '/'}>
+                Sign in
               </button>
             </p>
           </div>
