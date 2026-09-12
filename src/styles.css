@@ -648,7 +648,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-width: 600px;
+  width: 100%;
+  max-width: 100%;
 }
 
 .budget-breakdown {
