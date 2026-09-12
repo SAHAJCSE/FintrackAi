@@ -70,6 +70,8 @@ function App() {
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [theme, setTheme] = useState('dark');
   const [activePage, setActivePage] = useState('home');
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [isSidebarOpenMobile, setIsSidebarOpenMobile] = useState(false);
 
   // Derive single-source-of-truth financial metrics
   const financialSummary = calculateFinancialSummary(transactions);
@@ -180,6 +182,7 @@ function App() {
 
   const navigateTo = (page, path) => {
     setActivePage(page);
+    setIsSidebarOpenMobile(false);
     if (window.history && window.history.pushState) {
       window.history.pushState({}, '', path);
     }
@@ -189,16 +192,13 @@ function App() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  const handleAddExpense = (newExpense) => {
-    const numericAmount = Number(newExpense.amount);
-    const newTransaction = {
-      id: Date.now(),
-      merchant: newExpense.merchant,
-      amount: numericAmount,
-      category: newExpense.category,
-      date: newExpense.date || new Date().toISOString().split('T')[0],
-    };
-    setTransactions((prev) => [newTransaction, ...prev]);
+  const toggleSidebar = () => {
+    setIsSidebarVisible((prev) => !prev);
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setIsSidebarOpenMobile((prev) => !prev);
+    } else {
+      setIsSidebarOpenMobile(false);
+    }
   };
 
   if (!isLoggedIn) {
@@ -222,6 +222,9 @@ function App() {
   const sidebarProps = {
     activePage,
     theme,
+    isVisible: isSidebarVisible,
+    isOpenMobile: isSidebarOpenMobile,
+    onCloseMobile: () => setIsSidebarOpenMobile(false),
     onToggleTheme: toggleTheme,
     onHomeClick: () => navigateTo('home', '/'),
     onHealthClick: () => navigateTo('health', '/health'),
@@ -234,11 +237,15 @@ function App() {
   if (activePage === 'scanner') {
     return (
       <div className="receipt-scanner-page">
+        {isSidebarOpenMobile && (
+          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
+        )}
         <Sidebar {...sidebarProps} />
         <main className="receipt-scanner-main">
           <ReceiptScanner
             onBackToDashboard={() => navigateTo('home', '/')}
-            onAddExpense={handleAddExpense}
+            onAddExpense={setTransactions}
+            onToggleSidebar={toggleSidebar}
           />
         </main>
       </div>
@@ -249,15 +256,28 @@ function App() {
   if (activePage === 'aicoach') {
     return (
       <div className="ai-coach-page">
+        {isSidebarOpenMobile && (
+          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
+        )}
         <Sidebar {...sidebarProps} />
         <main className="ai-coach-main">
-          <button
-            type="button"
-            className="btn-primary ai-coach-back"
-            onClick={() => navigateTo('home', '/')}
-          >
-            ← Back to Dashboard
-          </button>
+          <div className="view-header-bar">
+            <button
+              type="button"
+              className="sidebar-toggle-btn"
+              onClick={toggleSidebar}
+              title="Toggle Sidebar Menu"
+            >
+              ☰
+            </button>
+            <button
+              type="button"
+              className="btn-primary ai-coach-back"
+              onClick={() => navigateTo('home', '/')}
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
           <AiCoach transactions={transactions} />
         </main>
       </div>
@@ -268,15 +288,28 @@ function App() {
   if (activePage === 'health') {
     return (
       <div className="health-page">
+        {isSidebarOpenMobile && (
+          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
+        )}
         <Sidebar {...sidebarProps} />
         <main className="health-main">
-          <button
-            type="button"
-            className="btn-primary health-back"
-            onClick={() => navigateTo('home', '/')}
-          >
-            ← Back to Dashboard
-          </button>
+          <div className="view-header-bar">
+            <button
+              type="button"
+              className="sidebar-toggle-btn"
+              onClick={toggleSidebar}
+              title="Toggle Sidebar Menu"
+            >
+              ☰
+            </button>
+            <button
+              type="button"
+              className="btn-primary health-back"
+              onClick={() => navigateTo('home', '/')}
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
           <FinancialHealth transactions={transactions} />
         </main>
       </div>
@@ -287,15 +320,28 @@ function App() {
   if (activePage === 'budget') {
     return (
       <div className="budget-page">
+        {isSidebarOpenMobile && (
+          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
+        )}
         <Sidebar {...sidebarProps} />
         <main className="budget-main">
-          <button
-            type="button"
-            className="btn-primary budget-back"
-            onClick={() => navigateTo('home', '/')}
-          >
-            ← Back to Dashboard
-          </button>
+          <div className="view-header-bar">
+            <button
+              type="button"
+              className="sidebar-toggle-btn"
+              onClick={toggleSidebar}
+              title="Toggle Sidebar Menu"
+            >
+              ☰
+            </button>
+            <button
+              type="button"
+              className="btn-primary budget-back"
+              onClick={() => navigateTo('home', '/')}
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
           <BudgetPrediction transactions={transactions} />
         </main>
       </div>
@@ -304,6 +350,9 @@ function App() {
 
   return (
     <div className="dashboard-container">
+      {isSidebarOpenMobile && (
+        <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
+      )}
       {isAddExpenseOpen && (
         <AddExpense
           transactions={transactions}
@@ -317,6 +366,17 @@ function App() {
         {/* Top Header */}
         <header className="dashboard-header">
           <div className="header-left">
+            {/* Universal Sidebar Toggle Icon Button */}
+            <button
+              type="button"
+              className="sidebar-toggle-btn"
+              onClick={toggleSidebar}
+              title="Toggle Sidebar Menu"
+            >
+              ☰
+            </button>
+
+            {/* Top-Left Theme Changes Button */}
             <button
               type="button"
               className="theme-toggle-btn"

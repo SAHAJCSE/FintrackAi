@@ -3,6 +3,9 @@ import React from 'react';
 function Sidebar({
   activePage = 'home',
   theme = 'dark',
+  isVisible = true,
+  isOpenMobile = false,
+  onCloseMobile,
   onToggleTheme,
   onHomeClick,
   onHealthClick,
@@ -10,8 +13,13 @@ function Sidebar({
   onAiCoachClick,
   onReceiptScannerClick,
 }) {
+  const handleNavClick = (callback) => {
+    if (callback) callback();
+    if (onCloseMobile) onCloseMobile();
+  };
+
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${!isVisible ? 'sidebar-hidden' : ''} ${isOpenMobile ? 'mobile-open' : ''}`}>
       <div className="sidebar-top">
         <div className="sidebar-logo">FT</div>
         
@@ -29,7 +37,7 @@ function Sidebar({
       <nav className="sidebar-nav">
         <div
           className={`nav-item ${activePage === 'home' ? 'active' : ''}`}
-          onClick={onHomeClick}
+          onClick={() => handleNavClick(onHomeClick)}
         >
           <span className="nav-dot" />
           <span>Home</span>
@@ -37,7 +45,7 @@ function Sidebar({
 
         <div
           className={`nav-item ${activePage === 'health' ? 'active' : ''}`}
-          onClick={onHealthClick}
+          onClick={() => handleNavClick(onHealthClick)}
         >
           <span className="nav-dot" />
           <span>Health</span>
@@ -45,7 +53,7 @@ function Sidebar({
 
         <div
           className={`nav-item ${activePage === 'budget' ? 'active' : ''}`}
-          onClick={onBudgetClick}
+          onClick={() => handleNavClick(onBudgetClick)}
         >
           <span className="nav-dot" />
           <span>Budget</span>
@@ -53,7 +61,7 @@ function Sidebar({
 
         <div
           className={`nav-item ${activePage === 'aicoach' ? 'active' : ''}`}
-          onClick={onAiCoachClick}
+          onClick={() => handleNavClick(onAiCoachClick)}
         >
           <span className="nav-dot" />
           <span>AI Coach</span>
@@ -61,7 +69,7 @@ function Sidebar({
 
         <div
           className={`nav-item ${activePage === 'scanner' || activePage === 'receipt-scanner' ? 'active' : ''}`}
-          onClick={onReceiptScannerClick}
+          onClick={() => handleNavClick(onReceiptScannerClick)}
           title="Receipt Scanner"
         >
           <span className="nav-dot" />
