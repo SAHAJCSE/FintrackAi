@@ -36,7 +36,7 @@ const initialRecentScans = [
   },
 ];
 
-function ReceiptScanner({ onBackToDashboard, onAddExpense }) {
+function ReceiptScanner({ onBackToDashboard, onAddExpense, onToggleSidebar }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -219,15 +219,27 @@ function ReceiptScanner({ onBackToDashboard, onAddExpense }) {
       )}
 
       {/* Navigation Header Action */}
-      {onBackToDashboard && (
-        <button
-          type="button"
-          className="btn-primary receipt-back-btn"
-          onClick={onBackToDashboard}
-        >
-          ← Back to Dashboard
-        </button>
-      )}
+      <div className="view-header-bar">
+        {onToggleSidebar && (
+          <button
+            type="button"
+            className="sidebar-toggle-btn"
+            onClick={onToggleSidebar}
+            title="Toggle Sidebar Menu"
+          >
+            ☰
+          </button>
+        )}
+        {onBackToDashboard && (
+          <button
+            type="button"
+            className="btn-primary receipt-back-btn"
+            onClick={onBackToDashboard}
+          >
+            ← Back to Dashboard
+          </button>
+        )}
+      </div>
 
       {/* Page Header */}
       <header className="scanner-header">
