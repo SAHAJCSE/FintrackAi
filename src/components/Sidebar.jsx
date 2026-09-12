@@ -1,34 +1,71 @@
-// Sidebar.jsx
-// This is the left navigation bar.
-// It has buttons that open the different full-screen pages.
-// Each button calls a function passed down from App.jsx.
-
 import React from 'react';
 
-function Sidebar({ onHomeClick, onHealthClick, onBudgetClick, onAiCoachClick }) {
+function Sidebar({
+  activePage = 'home',
+  theme = 'dark',
+  onToggleTheme,
+  onHomeClick,
+  onHealthClick,
+  onBudgetClick,
+  onAiCoachClick,
+  onReceiptScannerClick,
+}) {
   return (
     <aside className="sidebar">
-      <div className="sidebar-logo">FT</div>
+      <div className="sidebar-top">
+        <div className="sidebar-logo">FT</div>
+        
+        {/* Theme Changes Button at Top Left */}
+        <button
+          type="button"
+          className="sidebar-theme-toggle"
+          onClick={onToggleTheme}
+          title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Theme`}
+        >
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+      </div>
 
       <nav className="sidebar-nav">
-        <div className="nav-item active">
+        <div
+          className={`nav-item ${activePage === 'home' ? 'active' : ''}`}
+          onClick={onHomeClick}
+        >
           <span className="nav-dot" />
           <span>Home</span>
         </div>
 
-        <div className="nav-item" onClick={onHealthClick}>
+        <div
+          className={`nav-item ${activePage === 'health' ? 'active' : ''}`}
+          onClick={onHealthClick}
+        >
           <span className="nav-dot" />
           <span>Health</span>
         </div>
 
-        <div className="nav-item" onClick={onBudgetClick}>
+        <div
+          className={`nav-item ${activePage === 'budget' ? 'active' : ''}`}
+          onClick={onBudgetClick}
+        >
           <span className="nav-dot" />
           <span>Budget</span>
         </div>
 
-        <div className="nav-item" onClick={onAiCoachClick}>
+        <div
+          className={`nav-item ${activePage === 'aicoach' ? 'active' : ''}`}
+          onClick={onAiCoachClick}
+        >
           <span className="nav-dot" />
           <span>AI Coach</span>
+        </div>
+
+        <div
+          className={`nav-item ${activePage === 'scanner' || activePage === 'receipt-scanner' ? 'active' : ''}`}
+          onClick={onReceiptScannerClick}
+          title="Receipt Scanner"
+        >
+          <span className="nav-dot" />
+          <span>Scanner</span>
         </div>
       </nav>
     </aside>
