@@ -1,54 +1,21 @@
 import React, { useState } from 'react';
 import '../login.css';
 
-function Login({ onLogin }) {
-  // These states hold the form values and UI state.
+function Login({ onLogin, onNavigateToCreateAccount }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
-  // This function runs when the user types in a field.
-  const handleEmailChange = (e) => {
-    setEmail(e.target.value);
-    if (error) setError('');
-  };
-
-  const handlePasswordChange = (e) => {
-    setPassword(e.target.value);
-    if (error) setError('');
-  };
-
-  // This function runs when the user submits the form.
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Check that both fields are filled in.
-    if (!email || !password) {
-      setError('Please fill in all fields.');
-      return;
-    }
-
-    // Check that the email looks correct.
-    if (!email.includes('@') || !email.includes('.')) {
-      setError('Please enter a valid email address.');
-      return;
-    }
-
-    // Check that the password is at least 6 characters.
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
-      return;
-    }
-
-    // Show a loading state and then log the user in.
+    // Fast demo login with no validation barriers
     setLoading(true);
-    setError('');
     setTimeout(() => {
       setLoading(false);
       onLogin();
-    }, 1500);
+    }, 400);
   };
 
   return (
@@ -106,19 +73,14 @@ function Login({ onLogin }) {
               <div className="form-group">
                 <label htmlFor="login-email" className="form-label">Email address</label>
                 <div className="input-wrapper">
-                  <span className="input-icon">
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                    </svg>
-                  </span>
                   <input
                     id="login-email"
                     type="email"
                     name="email"
-                    className="form-input"
+                    className="form-input clean-input"
                     placeholder="you@example.com"
                     value={email}
-                    onChange={handleEmailChange}
+                    onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
                   />
                 </div>
@@ -131,20 +93,14 @@ function Login({ onLogin }) {
                   <button type="button" className="forgot-link">Forgot password?</button>
                 </div>
                 <div className="input-wrapper">
-                  <span className="input-icon">
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M7 11V7a5 5 0 0110 0v4"/>
-                    </svg>
-                  </span>
                   <input
                     id="login-password"
                     type={showPassword ? 'text' : 'password'}
                     name="password"
-                    className="form-input"
+                    className="form-input clean-input"
                     placeholder="••••••••"
                     value={password}
-                    onChange={handlePasswordChange}
+                    onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
                   />
                   <button
@@ -167,17 +123,6 @@ function Login({ onLogin }) {
                 </div>
               </div>
 
-              {error && (
-                <div className="form-error" role="alert">
-                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="8" x2="12" y2="12"/>
-                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                  </svg>
-                  {error}
-                </div>
-              )}
-
               <button
                 id="login-submit-btn"
                 type="submit"
@@ -194,7 +139,12 @@ function Login({ onLogin }) {
 
             <p className="signup-prompt">
               Don't have an account?{' '}
-              <button type="button" className="signup-link" id="signup-link-btn" onClick={() => window.location.href = '/create-account'}>
+              <button
+                type="button"
+                className="signup-link"
+                id="signup-link-btn"
+                onClick={onNavigateToCreateAccount}
+              >
                 Create one free
               </button>
             </p>
