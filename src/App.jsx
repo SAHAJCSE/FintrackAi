@@ -68,14 +68,42 @@ function App() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [transactions, setTransactions] = useState(initialTransactions);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [addExpenseDefaultCategory, setAddExpenseDefaultCategory] = useState('Food');
   const [theme, setTheme] = useState('dark');
   const [activePage, setActivePage] = useState('home');
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [isSidebarOpenMobile, setIsSidebarOpenMobile] = useState(false);
 
+  // Track which bills are paid or deleted
+  const [paidBills, setPaidBills] = useState(new Set());
+  const [deletedBills, setDeletedBills] = useState(new Set());
+  // Track which subscriptions are deleted
+  const [deletedSubscriptions, setDeletedSubscriptions] = useState(new Set());
+
   // Derive single-source-of-truth financial metrics
   const financialSummary = calculateFinancialSummary(transactions);
   const categoryTotals = getCategoryTotals(transactions);
+
+  // Derive bill reminders from transactions (Bills category).
+  // Hide deleted bills and mark paid bills.
+  const billReminders = transactions
+    .filter((t) => t.category === 'Bills' && !deletedBills.has(t.id))
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .map((t) => ({
+      id: t.id,
+      name: t.merchant,
+      note: `Due ${new Date(t.date).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}`,
+      value: formatCurrency(t.amount),
+      paid: paidBills.has(t.id),
+    }));
+
+  // Bill actions
+  const markBillPaid = (id) => setPaidBills((prev) => new Set([...prev, id]));
+  const removeBill = (id) => setDeletedBills((prev) => new Set([...prev, id]));
+
+  // Subscription actions
+  const removeSubscription = (name) =>
+    setDeletedSubscriptions((prev) => new Set([...prev, name]));
 
   // Dynamic spending categories array reconciled with actual transaction totals
   const spendingCategories = [
@@ -358,6 +386,7 @@ function App() {
           transactions={transactions}
           setTransactions={setTransactions}
           onClose={() => setIsAddExpenseOpen(false)}
+          defaultCategory={addExpenseDefaultCategory}
         />
       )}
       <Sidebar {...sidebarProps} />
@@ -399,7 +428,7 @@ function App() {
             >
               🧾 Scan Receipt
             </button>
-            <button type="button" className="btn-primary" onClick={() => setIsAddExpenseOpen(true)}>
+            <button type="button" className="btn-primary" onClick={() => { setAddExpenseDefaultCategory('Food'); setIsAddExpenseOpen(true); }}>
               + Add Transaction
             </button>
           </div>
@@ -478,11 +507,17 @@ function App() {
               </Panel>
 
               <Panel title="Detected subscriptions" action="Show more">
-                <div className="list-container">
-                  {initialSubscriptions.map((item) => (
-                    <ListRow key={item.name} {...item} />
+              <div className="list-container">
+                {initialSubscriptions
+                  .filter((item) => !deletedSubscriptions.has(item.name))
+                  .map((item) => (
+                    <ListRow
+                      key={item.name}
+                      {...item}
+                      onDelete={() => removeSubscription(item.name)}
+                    />
                   ))}
-                </div>
+              </div>
                 <p className="panel-footer-note">
                   Cancel 1 unused subscription to save ₹299 a month.
                 </p>
@@ -492,10 +527,22 @@ function App() {
 
           {/* Right Column */}
           <div className="grid-right-col">
-            <Panel title="Bill reminders">
+            <Panel
+              title="Bill reminders"
+              action="Add bill"
+              onAction={() => {
+                setAddExpenseDefaultCategory('Bills');
+                setIsAddExpenseOpen(true);
+              }}
+            >
               <div className="list-container">
-                {initialBills.map((item) => (
-                  <ListRow key={item.name} {...item} />
+                {billReminders.map((item) => (
+                  <ListRow
+                    key={item.id}
+                    {...item}
+                    onPaid={() => markBillPaid(item.id)}
+                    onDelete={() => removeBill(item.id)}
+                  />
                 ))}
               </div>
             </Panel>

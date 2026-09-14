@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 
-function AddExpense({ transactions, setTransactions, onClose }) {
+function AddExpense({ transactions, setTransactions, onClose, defaultCategory }) {
   const [transactionType, setTransactionType] = useState('debit'); // 'debit' = Expense, 'credit' = Income
   const [merchant, setMerchant] = useState('');
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('Food');
+  const [category, setCategory] = useState(defaultCategory || 'Food');
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
 
   const handleSubmit = (event) => {
