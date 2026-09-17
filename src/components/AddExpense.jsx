@@ -30,7 +30,7 @@ function AddExpense({ transactions, setTransactions, onClose, defaultCategory })
 
     const newTransaction = {
       id: Date.now(),
-      merchant: cleanMerchant,
+      merchant: cleanMerchant,   
       amount: finalAmount,
       category: finalCategory,
       date: date || new Date().toISOString().split('T')[0],
