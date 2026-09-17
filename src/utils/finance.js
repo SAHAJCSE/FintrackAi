@@ -76,18 +76,25 @@ export function calculateFinancialSummary(transactions = []) {
 
   const totalBalance = totalIncome - totalExpenses;
   
-  // Safe percentage calculation guarding against division by zero
-  const savingsRate = totalIncome > 0 ? Math.max(0, ((totalIncome - totalExpenses) / totalIncome) * 100) : 0;
+// Safe percentage calculation guarding against division by zero
+  const savingsRate = totalIncome > 0 ? Math.max(-100, ((totalIncome - totalExpenses) / totalIncome) * 100) : 0;
 
-  // Dynamic health score (base score derived from cash flow ratio and savings rate)
-  let healthScore = 50;
+  // Dynamic continuous health score calculation (Formula-driven, no rigid steps)
+  let healthScore = 50; // Neutral baseline
+
   if (totalIncome > 0) {
-    const expenseRatio = totalExpenses / totalIncome;
-    if (expenseRatio <= 0.5) healthScore = 88;
-    else if (expenseRatio <= 0.7) healthScore = 82;
-    else if (expenseRatio <= 0.9) healthScore = 65;
-    else healthScore = 42;
+    const savingsRatio = (totalIncome - totalExpenses) / totalIncome;
+    // Proportional scaling: anchors to 50 and moves smoothly based on savings
+    healthScore = 50 + (savingsRatio * 50);
+  } else if (totalExpenses > 0) {
+    // Emergency edge case: Expenses with zero income
+    healthScore = 10;
+  } else {
+    healthScore = 50;
   }
+
+  // Round and strictly clamp between 5 and 100 to protect UI components
+  healthScore = Math.min(Math.max(Math.round(healthScore), 5), 100);
 
   return {
     totalIncome,

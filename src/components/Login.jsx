@@ -6,11 +6,30 @@ function Login({ onLogin, onNavigateToCreateAccount }) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const validateEmail = (val) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(String(val).toLowerCase().trim());
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setError('');
 
-    // Fast demo login with no validation barriers
+    const cleanEmail = email.trim();
+
+    if (!cleanEmail) {
+      setError('Please enter your email address.');
+      return;
+    }
+
+    if (!validateEmail(cleanEmail)) {
+      setError('Please enter a valid email address (e.g. name@domain.com).');
+      return;
+    }
+
+    // Fast demo login after email authentication validation
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
@@ -69,6 +88,15 @@ function Login({ onLogin, onNavigateToCreateAccount }) {
             </div>
 
             <form className="login-form" onSubmit={handleSubmit} noValidate>
+              {error && (
+                <div className="form-error">
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span>{error}</span>
+                </div>
+              )}
+
               {/* Email */}
               <div className="form-group">
                 <label htmlFor="login-email" className="form-label">Email address</label>

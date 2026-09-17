@@ -105,6 +105,21 @@ function App() {
   const removeSubscription = (name) =>
     setDeletedSubscriptions((prev) => new Set([...prev, name]));
 
+  // Safe handler to append a new transaction object to transactions state array
+  const handleAddTransaction = (newTx) => {
+    setTransactions((prev) => {
+      const currentArr = Array.isArray(prev) ? prev : [];
+      const formattedTx = {
+        id: Date.now(),
+        merchant: newTx.merchant || 'Expense',
+        amount: typeof newTx.amount === 'number' ? newTx.amount : -Math.abs(Number(newTx.amount) || 0),
+        category: newTx.category || 'Food',
+        date: newTx.date || new Date().toISOString().split('T')[0],
+      };
+      return [formattedTx, ...currentArr];
+    });
+  };
+
   // Dynamic spending categories array reconciled with actual transaction totals
   const spendingCategories = [
     {
@@ -272,7 +287,7 @@ function App() {
         <main className="receipt-scanner-main">
           <ReceiptScanner
             onBackToDashboard={() => navigateTo('home', '/')}
-            onAddExpense={setTransactions}
+            onAddExpense={handleAddTransaction}
             onToggleSidebar={toggleSidebar}
           />
         </main>

@@ -156,36 +156,81 @@ function ReceiptScanner({ onBackToDashboard, onAddExpense, onToggleSidebar }) {
     setExtractedData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Helper to map UI category string to transaction category key
+  const mapCategoryToTransaction = (cat) => {
+    if (!cat) return 'Food';
+    if (cat.includes('Food')) return 'Food';
+    if (cat.includes('Transport')) return 'Transport';
+    if (cat.includes('Bills')) return 'Bills';
+    if (cat.includes('Health')) return 'Health';
+    if (cat.includes('Groceries')) return 'Groceries';
+    if (cat.includes('Shopping')) return 'Shopping';
+    if (cat.includes('Entertainment')) return 'Entertainment';
+    return cat.split(' ')[0] || 'Food';
+  };
+
+  const getThumbnail = (cat) => {
+    if (!cat) return '🧾';
+    if (cat.includes('Food')) return '☕';
+    if (cat.includes('Shopping')) return '📦';
+    if (cat.includes('Transport')) return '🚗';
+    if (cat.includes('Bills')) return '⚡';
+    if (cat.includes('Groceries')) return '🛒';
+    if (cat.includes('Health')) return '💊';
+    if (cat.includes('Entertainment')) return '🎬';
+    return '🧾';
+  };
+
+  const formatTransactionDate = (dateStr) => {
+    if (!dateStr) return new Date().toISOString().split('T')[0];
+    const parsed = new Date(dateStr);
+    if (!isNaN(parsed.getTime())) {
+      return parsed.toISOString().split('T')[0];
+    }
+    return new Date().toISOString().split('T')[0];
+  };
+
   // Save Expense
   const handleSaveExpense = (e) => {
     e.preventDefault();
-    const numericAmount = parseFloat(extractedData.amount.replace(/[^0-9.]/g, '')) || 450;
-    
+    const numericAmount = parseFloat(String(extractedData.amount).replace(/[^0-9.]/g, '')) || 450;
+    const targetCategory = mapCategoryToTransaction(extractedData.category);
+    const txDate = formatTransactionDate(extractedData.date);
+
     if (onAddExpense) {
       onAddExpense({
-        merchant: extractedData.merchant,
-        amount: -numericAmount,
-        category: extractedData.category.split(' ')[0] || 'Food',
-        date: extractedData.date,
+        merchant: extractedData.merchant || 'Scanned Receipt',
+        amount: -Math.abs(numericAmount),
+        category: targetCategory,
+        date: txDate,
       });
     }
 
-    // Add to local recent scans
+    // Add to local recent scans state array safely
     const newScanEntry = {
       id: `scan-${Date.now()}`,
-      merchant: extractedData.merchant,
-      amount: `₹${numericAmount}`,
-      category: extractedData.category,
-      date: extractedData.date,
-      thumbnail: extractedData.category.includes('Food') ? '☕' : '🧾',
+      merchant: extractedData.merchant || 'Scanned Receipt',
+      amount: `₹${numericAmount.toLocaleString('en-IN')}`,
+      category: extractedData.category || 'Food & Dining',
+      date: extractedData.date || 'Today',
+      thumbnail: getThumbnail(extractedData.category),
     };
 
-    setRecentScans([newScanEntry, ...recentScans]);
-    setToastMessage(`Expense for ${extractedData.merchant} saved successfully!`);
+    setRecentScans((prevScans) => [newScanEntry, ...prevScans]);
+    setToastMessage(`Expense for ${extractedData.merchant || 'Scanned Receipt'} saved successfully!`);
+
+    // Automatically close the extracted details box & reset upload view
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setHasScanned(false);
+    setIsScanning(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
 
     setTimeout(() => {
       setToastMessage('');
-    }, 3000);
+    }, 3500);
   };
 
   // Reset to scan another
