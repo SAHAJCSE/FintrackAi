@@ -41,3 +41,19 @@ This project aims to develop **FinTrack AI**, an intelligent personal finance ma
    ```sh
    npm run build
    ```
+
+
+   Feature	How to implement in React
+Expense tracking	Controlled forms + useState
+Persistent transactions	localStorage + useEffect
+Budget management	Progress bars + derived calculations
+Financial health score	JavaScript calculation + visual gauge
+Budget prediction	Simple calculations using past expenses
+AI-style financial coach	Rule-based insights using transaction data
+Receipt scanner UI	File upload + preview; simulate scanning
+Subscription detection	Detect recurring transactions in sample data
+Savings goals	Forms, progress bars and goal calculations
+Smart alerts	Conditional rendering based on spending limits
+Search and filters	Search input, category and date filters
+Voice expense entry	Browser Speech Recognition API, if supported
+
