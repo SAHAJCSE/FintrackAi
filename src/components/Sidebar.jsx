@@ -8,10 +8,12 @@ function Sidebar({
   onCloseMobile,
   onToggleTheme,
   onHomeClick,
+  onDashboardClick,
   onHealthClick,
   onBudgetClick,
   onAiCoachClick,
   onReceiptScannerClick,
+  onLogout,
 }) {
   const handleNavClick = (callback) => {
     if (callback) callback();
@@ -38,14 +40,25 @@ function Sidebar({
         <div
           className={`nav-item ${activePage === 'home' ? 'active' : ''}`}
           onClick={() => handleNavClick(onHomeClick)}
+          title="Home Page"
         >
           <span className="nav-dot" />
           <span>Home</span>
         </div>
 
         <div
+          className={`nav-item ${activePage === 'dashboard' ? 'active' : ''}`}
+          onClick={() => handleNavClick(onDashboardClick)}
+          title="Financial Dashboard"
+        >
+          <span className="nav-dot" />
+          <span>Dashboard</span>
+        </div>
+
+        <div
           className={`nav-item ${activePage === 'health' ? 'active' : ''}`}
           onClick={() => handleNavClick(onHealthClick)}
+          title="Financial Health"
         >
           <span className="nav-dot" />
           <span>Health</span>
@@ -54,6 +67,7 @@ function Sidebar({
         <div
           className={`nav-item ${activePage === 'budget' ? 'active' : ''}`}
           onClick={() => handleNavClick(onBudgetClick)}
+          title="Budget Prediction"
         >
           <span className="nav-dot" />
           <span>Budget</span>
@@ -62,6 +76,7 @@ function Sidebar({
         <div
           className={`nav-item ${activePage === 'aicoach' ? 'active' : ''}`}
           onClick={() => handleNavClick(onAiCoachClick)}
+          title="AI Coach"
         >
           <span className="nav-dot" />
           <span>AI Coach</span>
@@ -75,6 +90,18 @@ function Sidebar({
           <span className="nav-dot" />
           <span>Scanner</span>
         </div>
+
+        {onLogout && (
+          <div
+            className="nav-item"
+            onClick={() => handleNavClick(onLogout)}
+            title="Log Out"
+            style={{ marginTop: '14px', cursor: 'pointer' }}
+          >
+            <span className="nav-dot" style={{ background: '#f87171' }} />
+            <span style={{ color: '#f87171' }}>Logout</span>
+          </div>
+        )}
       </nav>
     </aside>
   );

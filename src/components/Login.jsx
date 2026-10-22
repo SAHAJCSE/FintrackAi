@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../login.css';
 
-function Login({ onLogin, onNavigateToCreateAccount }) {
+function Login({ onLogin, onNavigateToCreateAccount, onBackToHome }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -75,6 +75,27 @@ function Login({ onLogin, onNavigateToCreateAccount }) {
         {/* Right form panel */}
         <main className="login-form-panel">
           <div className="login-card">
+            {onBackToHome && (
+              <button
+                type="button"
+                className="btn-back-home"
+                onClick={onBackToHome}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  marginBottom: '16px',
+                  padding: '4px 0',
+                }}
+              >
+                ← Back to Home
+              </button>
+            )}
             <div className="mobile-logo">
               <div className="brand-logo brand-logo-sm"><span>FT</span></div>
               <span className="mobile-brand-name">FinTrack AI</span>
@@ -162,6 +183,41 @@ function Login({ onLogin, onNavigateToCreateAccount }) {
                 ) : (
                   'Sign in'
                 )}
+              </button>
+
+              {/* Quick Demo Sign In */}
+              <button
+                type="button"
+                className="btn-demo-quick"
+                onClick={() => {
+                  setEmail('rohan@example.com');
+                  setPassword('password123');
+                  setLoading(true);
+                  setTimeout(() => {
+                    setLoading(false);
+                    onLogin();
+                  }, 300);
+                }}
+                style={{
+                  width: '100%',
+                  marginTop: '10px',
+                  padding: '11px',
+                  borderRadius: '10px',
+                  background: 'rgba(52, 211, 153, 0.1)',
+                  border: '1px solid rgba(52, 211, 153, 0.3)',
+                  color: '#34d399',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  fontFamily: 'inherit',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                }}
+              >
+                ⚡ Quick Demo Sign In (Instant Access)
               </button>
             </form>
 

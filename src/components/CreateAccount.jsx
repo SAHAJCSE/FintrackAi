@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../login.css';
 
-function CreateAccount({ onLogin, onBackToLogin }) {
+function CreateAccount({ onLogin, onBackToLogin, onBackToHome }) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -80,6 +80,27 @@ function CreateAccount({ onLogin, onBackToLogin }) {
         {/* Right form panel */}
         <main className="login-form-panel">
           <div className="login-card">
+            {onBackToHome && (
+              <button
+                type="button"
+                className="btn-back-home"
+                onClick={onBackToHome}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  marginBottom: '16px',
+                  padding: '4px 0',
+                }}
+              >
+                ← Back to Home
+              </button>
+            )}
             <div className="mobile-logo">
               <div className="brand-logo brand-logo-sm"><span>FT</span></div>
               <span className="mobile-brand-name">FinTrack AI</span>

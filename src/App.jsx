@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import HomePage from './components/HomePage';
 import Login from './components/Login';
 import CreateAccount from './components/CreateAccount';
 import Sidebar from './components/Sidebar';
@@ -209,18 +210,32 @@ function App() {
     document.body.className = theme === 'light' ? 'theme-light' : 'theme-dark';
   }, [theme]);
 
-  // Check URL path on mount
+  // Check URL path on mount & popstate
   useEffect(() => {
-    const path = window.location.pathname;
-    if (path === '/receipt-scanner') {
-      setActivePage('scanner');
-    } else if (path === '/ai-coach') {
-      setActivePage('aicoach');
-    } else if (path === '/health') {
-      setActivePage('health');
-    } else if (path === '/budget') {
-      setActivePage('budget');
-    }
+    const syncRouteFromPath = () => {
+      const path = window.location.pathname;
+      if (path === '/receipt-scanner') {
+        setActivePage('scanner');
+      } else if (path === '/ai-coach') {
+        setActivePage('aicoach');
+      } else if (path === '/health') {
+        setActivePage('health');
+      } else if (path === '/budget') {
+        setActivePage('budget');
+      } else if (path === '/dashboard') {
+        setActivePage('dashboard');
+      } else if (path === '/login') {
+        setActivePage('login');
+      } else if (path === '/register') {
+        setActivePage('register');
+      } else {
+        setActivePage('home');
+      }
+    };
+
+    syncRouteFromPath();
+    window.addEventListener('popstate', syncRouteFromPath);
+    return () => window.removeEventListener('popstate', syncRouteFromPath);
   }, []);
 
   const navigateTo = (page, path) => {
@@ -244,36 +259,94 @@ function App() {
     }
   };
 
+  // 1. Dedicated Minimal Animated Home Page (Public Landing - Shown before login)
+  if (activePage === 'home') {
+    return (
+      <HomePage
+        onNavigateToDashboard={() => {
+          if (!isLoggedIn) {
+            navigateTo('login', '/login');
+          } else {
+            navigateTo('dashboard', '/dashboard');
+          }
+        }}
+        onNavigateToLogin={() => navigateTo('login', '/login')}
+        onNavigateToScanner={() => {
+          if (!isLoggedIn) {
+            navigateTo('login', '/login');
+          } else {
+            navigateTo('scanner', '/receipt-scanner');
+          }
+        }}
+        onNavigateToAiCoach={() => {
+          if (!isLoggedIn) {
+            navigateTo('login', '/login');
+          } else {
+            navigateTo('aicoach', '/ai-coach');
+          }
+        }}
+        onLogout={() => {
+          setIsLoggedIn(false);
+          navigateTo('home', '/');
+        }}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        isLoggedIn={isLoggedIn}
+      />
+    );
+  }
+
+  // 2. Authentication Gate: If not logged in, user MUST sign in before seeing Dashboard & features
   if (!isLoggedIn) {
-    if (isRegistering) {
+    if (activePage === 'register' || isRegistering) {
       return (
         <CreateAccount
-          onLogin={() => setIsLoggedIn(true)}
-          onBackToLogin={() => setIsRegistering(false)}
+          onLogin={() => {
+            setIsLoggedIn(true);
+            setIsRegistering(false);
+            navigateTo('dashboard', '/dashboard');
+          }}
+          onBackToLogin={() => {
+            setIsRegistering(false);
+            navigateTo('login', '/login');
+          }}
+          onBackToHome={() => navigateTo('home', '/')}
         />
       );
     }
     return (
       <Login
-        onLogin={() => setIsLoggedIn(true)}
-        onNavigateToCreateAccount={() => setIsRegistering(true)}
+        onLogin={() => {
+          setIsLoggedIn(true);
+          navigateTo('dashboard', '/dashboard');
+        }}
+        onNavigateToCreateAccount={() => {
+          setIsRegistering(true);
+          navigateTo('register', '/register');
+        }}
+        onBackToHome={() => navigateTo('home', '/')}
       />
     );
   }
 
-  // Common navigation handlers for Sidebar
+  // Common navigation handlers for Sidebar (Authenticated session)
   const sidebarProps = {
-    activePage,
+    activePage: activePage === 'home' ? 'home' : (activePage === 'dashboard' ? 'dashboard' : activePage),
     theme,
     isVisible: isSidebarVisible,
     isOpenMobile: isSidebarOpenMobile,
     onCloseMobile: () => setIsSidebarOpenMobile(false),
     onToggleTheme: toggleTheme,
     onHomeClick: () => navigateTo('home', '/'),
+    onDashboardClick: () => navigateTo('dashboard', '/dashboard'),
     onHealthClick: () => navigateTo('health', '/health'),
     onBudgetClick: () => navigateTo('budget', '/budget'),
     onAiCoachClick: () => navigateTo('aicoach', '/ai-coach'),
     onReceiptScannerClick: () => navigateTo('scanner', '/receipt-scanner'),
+    onLogout: () => {
+      setIsLoggedIn(false);
+      navigateTo('home', '/');
+    },
   };
 
   // Dedicated Receipt Scanner page
@@ -286,7 +359,7 @@ function App() {
         <Sidebar {...sidebarProps} />
         <main className="receipt-scanner-main">
           <ReceiptScanner
-            onBackToDashboard={() => navigateTo('home', '/')}
+            onBackToDashboard={() => navigateTo('dashboard', '/dashboard')}
             onAddExpense={handleAddTransaction}
             onToggleSidebar={toggleSidebar}
           />
@@ -316,7 +389,7 @@ function App() {
             <button
               type="button"
               className="btn-primary ai-coach-back"
-              onClick={() => navigateTo('home', '/')}
+              onClick={() => navigateTo('dashboard', '/dashboard')}
             >
               ← Back to Dashboard
             </button>
@@ -348,7 +421,7 @@ function App() {
             <button
               type="button"
               className="btn-primary health-back"
-              onClick={() => navigateTo('home', '/')}
+              onClick={() => navigateTo('dashboard', '/dashboard')}
             >
               ← Back to Dashboard
             </button>
@@ -380,7 +453,7 @@ function App() {
             <button
               type="button"
               className="btn-primary budget-back"
-              onClick={() => navigateTo('home', '/')}
+              onClick={() => navigateTo('dashboard', '/dashboard')}
             >
               ← Back to Dashboard
             </button>
@@ -439,12 +512,32 @@ function App() {
             <button
               type="button"
               className="btn-secondary"
+              onClick={() => navigateTo('home', '/')}
+              title="Return to Home Landing Page"
+            >
+              🏠 Home
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
               onClick={() => navigateTo('scanner', '/receipt-scanner')}
             >
               🧾 Scan Receipt
             </button>
             <button type="button" className="btn-primary" onClick={() => { setAddExpenseDefaultCategory('Food'); setIsAddExpenseOpen(true); }}>
               + Add Transaction
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => {
+                setIsLoggedIn(false);
+                navigateTo('home', '/');
+              }}
+              title="Log out of FinTrack AI"
+              style={{ color: '#f87171', borderColor: 'rgba(248, 113, 113, 0.3)' }}
+            >
+              Logout
             </button>
           </div>
         </header>
