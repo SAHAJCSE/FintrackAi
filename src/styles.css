@@ -2,18 +2,18 @@
 :root {
   --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   
-  /* Dark Theme Palette */
-  --bg-main: #141318;
-  --bg-card: #1c1b22;
-  --bg-secondary: #26252e;
-  --bg-secondary-hover: #31303b;
+  /* Dark Theme Palette — Deep Dark Black & Sleek Emerald / Light Green */
+  --bg-main: #07080a;
+  --bg-card: #0f1217;
+  --bg-secondary: #161a22;
+  --bg-secondary-hover: #1f2530;
   
   --text-main: #f5f5f7;
-  --text-muted: #8e8d9a;
+  --text-muted: #8e95a5;
   
   --color-primary: #34d399;
   --color-primary-hover: #10b981;
-  --color-primary-text: #052e16;
+  --color-primary-text: #022c22;
   
   --color-success: #4ade80;
   --color-danger: #f87171;
