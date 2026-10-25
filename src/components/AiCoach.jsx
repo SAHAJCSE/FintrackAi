@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { normalizeCategory, formatCurrency } from '../utils/finance';
+import { useFinance } from '../context/FinanceContext';
 
-function AiCoach({ transactions = [] }) {
+function AiCoach({ transactions: propTransactions }) {
+  const finance = useFinance();
+  const transactions = propTransactions || finance.transactions || [];
   const [messages, setMessages] = useState([
     {
       role: 'coach',

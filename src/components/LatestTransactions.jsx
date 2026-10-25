@@ -5,8 +5,11 @@
 
 import React from 'react';
 import Panel from './Panel';
+import { useFinance } from '../context/FinanceContext';
 
-function LatestTransactions({ transactions = [] }) {
+function LatestTransactions({ transactions: propTransactions }) {
+  const finance = useFinance();
+  const transactions = propTransactions || finance.transactions || [];
   // Show only the first 5 transactions.
   // The newest ones are at the top of the list.
   const latestTransactions = transactions.slice(0, 5);

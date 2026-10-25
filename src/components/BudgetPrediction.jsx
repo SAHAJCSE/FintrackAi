@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useFinance } from '../context/FinanceContext';
 
-function BudgetPrediction({ transactions = [] }) {
+function BudgetPrediction({ transactions: propTransactions }) {
+  const finance = useFinance();
+  const transactions = propTransactions || finance.transactions || [];
   const [prediction, setPrediction] = useState(0);
 
   // Calculates total expense sum so top prediction equals the sum of all category expenses below

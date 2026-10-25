@@ -1,7 +1,16 @@
 import React, { useState } from 'react';
+import { useFinance } from '../context/FinanceContext';
 import '../login.css';
 
 function Login({ onLogin, onNavigateToCreateAccount, onBackToHome }) {
+  const finance = useFinance();
+  const handleLogin = onLogin || finance.login;
+  const handleNavigateToCreateAccount = onNavigateToCreateAccount || (() => {
+    finance.setIsRegistering(true);
+    finance.navigateTo('register', '/register');
+  });
+  const handleBackToHome = onBackToHome || (() => finance.navigateTo('home', '/'));
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -33,7 +42,7 @@ function Login({ onLogin, onNavigateToCreateAccount, onBackToHome }) {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      onLogin();
+      handleLogin();
     }, 400);
   };
 
@@ -75,11 +84,11 @@ function Login({ onLogin, onNavigateToCreateAccount, onBackToHome }) {
         {/* Right form panel */}
         <main className="login-form-panel">
           <div className="login-card">
-            {onBackToHome && (
+            {handleBackToHome && (
               <button
                 type="button"
                 className="btn-back-home"
-                onClick={onBackToHome}
+                onClick={handleBackToHome}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -195,7 +204,7 @@ function Login({ onLogin, onNavigateToCreateAccount, onBackToHome }) {
                   setLoading(true);
                   setTimeout(() => {
                     setLoading(false);
-                    onLogin();
+                    handleLogin();
                   }, 300);
                 }}
                 style={{
@@ -227,7 +236,7 @@ function Login({ onLogin, onNavigateToCreateAccount, onBackToHome }) {
                 type="button"
                 className="signup-link"
                 id="signup-link-btn"
-                onClick={onNavigateToCreateAccount}
+                onClick={handleNavigateToCreateAccount}
               >
                 Create one free
               </button>

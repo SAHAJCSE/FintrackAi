@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
+import { useFinance } from '../context/FinanceContext';
 
-function AddExpense({ transactions, setTransactions, onClose, defaultCategory }) {
+function AddExpense({ onClose: propOnClose, defaultCategory: propDefaultCategory }) {
+  const finance = useFinance();
+  const handleClose = propOnClose || finance.closeAddExpense;
+  const initialCategory = propDefaultCategory || finance.addExpenseDefaultCategory || 'Food';
+
   const [transactionType, setTransactionType] = useState('debit'); // 'debit' = Expense, 'credit' = Income
   const [merchant, setMerchant] = useState('');
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState(defaultCategory || 'Food');
+  const [category, setCategory] = useState(initialCategory);
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
 
   const handleSubmit = (event) => {
@@ -28,26 +33,23 @@ function AddExpense({ transactions, setTransactions, onClose, defaultCategory })
     const finalAmount = transactionType === 'credit' ? Math.abs(parsedAmount) : -Math.abs(parsedAmount);
     const finalCategory = transactionType === 'credit' ? 'Income' : category;
 
-    const newTransaction = {
-      id: Date.now(),
+    // Single source of truth update
+    finance.addTransaction({
       merchant: cleanMerchant,   
       amount: finalAmount,
       category: finalCategory,
       date: date || new Date().toISOString().split('T')[0],
-    };
-
-    // Prepend to top of transactions state so it appears immediately in Latest Transactions
-    setTransactions([newTransaction, ...transactions]);
+    });
 
     setMerchant('');
     setAmount('');
     setCategory('Food');
     setDate('');
-    onClose();
+    handleClose();
   };
 
   return (
-    <div className="expense-modal-backdrop" onClick={onClose}>
+    <div className="expense-modal-backdrop" onClick={handleClose}>
       <div className="expense-modal" onClick={(event) => event.stopPropagation()}>
         <h3 className="expense-modal-title">
           {transactionType === 'credit' ? 'Add Credit (Income)' : 'Add Debit (Expense)'}

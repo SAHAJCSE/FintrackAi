@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useFinance } from '../context/FinanceContext';
 
 // Mock recent scans data
 const initialRecentScans = [
@@ -37,6 +38,10 @@ const initialRecentScans = [
 ];
 
 function ReceiptScanner({ onBackToDashboard, onAddExpense, onToggleSidebar }) {
+  const finance = useFinance();
+  const handleAddExpenseAction = onAddExpense || finance.addTransaction;
+  const handleBackToDashboard = onBackToDashboard || (() => finance.navigateTo('dashboard', '/dashboard'));
+  const handleToggleSidebar = onToggleSidebar || finance.toggleSidebar;
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -197,8 +202,8 @@ function ReceiptScanner({ onBackToDashboard, onAddExpense, onToggleSidebar }) {
     const targetCategory = mapCategoryToTransaction(extractedData.category);
     const txDate = formatTransactionDate(extractedData.date);
 
-    if (onAddExpense) {
-      onAddExpense({
+    if (handleAddExpenseAction) {
+      handleAddExpenseAction({
         merchant: extractedData.merchant || 'Scanned Receipt',
         amount: -Math.abs(numericAmount),
         category: targetCategory,

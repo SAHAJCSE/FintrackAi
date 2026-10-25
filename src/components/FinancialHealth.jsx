@@ -1,7 +1,10 @@
 import React from 'react';
 import { calculateFinancialSummary, formatCurrency } from '../utils/finance';
+import { useFinance } from '../context/FinanceContext';
 
-function FinancialHealth({ transactions = [] }) {
+function FinancialHealth({ transactions: propTransactions }) {
+  const finance = useFinance();
+  const transactions = propTransactions || finance.transactions || [];
   const summary = calculateFinancialSummary(transactions);
 
   // SECTION 1: Dynamic Score Breakdown (Max 100 pts)

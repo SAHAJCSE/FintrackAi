@@ -292,23 +292,32 @@ body.theme-light .home-navbar {
 }
 
 .nav-theme-toggle {
-  background: var(--bg-secondary);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--text-main);
-  width: 36px;
-  height: 36px;
+  background: rgba(22, 26, 34, 0.9);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  color: #fbbf24;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 18px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.15);
+  user-select: none;
+  outline: none;
 }
 
 .nav-theme-toggle:hover {
-  background: var(--bg-secondary-hover);
-  transform: scale(1.05);
+  background: rgba(31, 37, 48, 1);
+  transform: scale(1.1) rotate(15deg);
+  border-color: #fbbf24;
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.35);
+}
+
+.nav-theme-toggle:active {
+  transform: scale(0.92);
 }
 
 .nav-sign-in-btn {
@@ -1311,4 +1320,436 @@ body.theme-light .home-footer {
 .footer-copyright {
   font-size: 13px;
   color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Complete Premium Light Theme Overrides for FinTrack AI Home Page
+   ========================================================================== */
+
+/* 1. Global Smooth Theme Transitions */
+.home-root,
+.home-navbar,
+.nav-theme-toggle,
+.nav-sign-in-btn,
+.hero-pill-badge,
+.hero-secondary-btn,
+.showcase-glass-deck,
+.showcase-health-card,
+.showcase-spending-visual,
+.showcase-live-feed,
+.ai-stream-card,
+.feed-item,
+.bento-card,
+.bento-icon-box,
+.calculator-card,
+.calc-right,
+.stat-box,
+.cta-banner-card,
+.home-footer {
+  transition: background-color 0.3s ease, background 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.25s ease;
+}
+
+/* 2. Page Container & Ambient Backdrop */
+body.theme-light .home-root,
+.home-root.theme-light {
+  background-color: #f8fafc;
+  background: 
+    radial-gradient(ellipse 90% 45% at 50% -8%, rgba(16, 185, 129, 0.1) 0%, transparent 60%),
+    radial-gradient(circle at 85% 35%, rgba(52, 211, 153, 0.06) 0%, transparent 45%),
+    #f8fafc;
+  color: #0f172a;
+}
+
+body.theme-light .home-grid-mask,
+.home-root.theme-light .home-grid-mask {
+  background-image: 
+    linear-gradient(to right, rgba(16, 185, 129, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(16, 185, 129, 0.07) 1px, transparent 1px);
+  mask-image: radial-gradient(ellipse 75% 65% at 50% 25%, black 40%, transparent 85%);
+  -webkit-mask-image: radial-gradient(ellipse 75% 65% at 50% 25%, black 40%, transparent 85%);
+}
+
+body.theme-light .ambient-orb,
+.home-root.theme-light .ambient-orb {
+  opacity: 0.18;
+}
+
+body.theme-light .ambient-orb-1,
+.home-root.theme-light .ambient-orb-1 {
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.16) 0%, rgba(52, 211, 153, 0.04) 50%, transparent 70%);
+}
+
+body.theme-light .ambient-orb-2,
+.home-root.theme-light .ambient-orb-2 {
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.03) 50%, transparent 70%);
+}
+
+body.theme-light .ambient-orb-3,
+.home-root.theme-light .ambient-orb-3 {
+  background: radial-gradient(circle, rgba(110, 231, 183, 0.12) 0%, rgba(16, 185, 129, 0.02) 50%, transparent 70%);
+}
+
+/* 3. Navbar */
+body.theme-light .home-navbar,
+.home-root.theme-light .home-navbar {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(16, 185, 129, 0.22);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06), 0 0 20px rgba(16, 185, 129, 0.04);
+}
+
+body.theme-light .brand-name-title,
+.home-root.theme-light .brand-name-title {
+  color: #0f172a;
+}
+
+body.theme-light .home-nav-link,
+.home-root.theme-light .home-nav-link {
+  color: #475569;
+}
+
+body.theme-light .home-nav-link:hover,
+.home-root.theme-light .home-nav-link:hover {
+  color: #0f172a;
+}
+
+body.theme-light .nav-theme-toggle,
+.home-root.theme-light .nav-theme-toggle {
+  background: #ffffff;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #0284c7;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .nav-theme-toggle:hover,
+.home-root.theme-light .nav-theme-toggle:hover {
+  background: #f1f5f9;
+  border-color: #10b981;
+  box-shadow: 0 0 18px rgba(16, 185, 129, 0.25);
+  transform: scale(1.1) rotate(15deg);
+}
+
+body.theme-light .nav-sign-in-btn,
+.home-root.theme-light .nav-sign-in-btn {
+  color: #0f172a;
+  border-color: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+body.theme-light .nav-sign-in-btn:hover,
+.home-root.theme-light .nav-sign-in-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+/* 4. Hero Section */
+body.theme-light .hero-pill-badge,
+.home-root.theme-light .hero-pill-badge {
+  background: #ffffff;
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.1);
+}
+
+body.theme-light .hero-title,
+.home-root.theme-light .hero-title {
+  color: #0f172a;
+}
+
+body.theme-light .text-gradient,
+.home-root.theme-light .text-gradient {
+  background: linear-gradient(135deg, #065f46 0%, #059669 45%, #10b981 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: none;
+}
+
+body.theme-light .hero-subtitle,
+.home-root.theme-light .hero-subtitle {
+  color: #475569;
+}
+
+body.theme-light .hero-secondary-btn,
+.home-root.theme-light .hero-secondary-btn {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .hero-secondary-btn:hover,
+.home-root.theme-light .hero-secondary-btn:hover {
+  background: #f8fafc;
+  border-color: #10b981;
+  color: #047857;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.18);
+}
+
+body.theme-light .hero-trust-row,
+.home-root.theme-light .hero-trust-row {
+  color: #64748b;
+}
+
+/* 5. Showcase Glass Deck & Nested Cards */
+body.theme-light .showcase-glass-deck,
+.home-root.theme-light .showcase-glass-deck {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(16, 185, 129, 0.22);
+  box-shadow: 0 24px 60px -15px rgba(0, 0, 0, 0.08), 0 0 35px rgba(16, 185, 129, 0.05);
+}
+
+body.theme-light .showcase-health-card,
+.home-root.theme-light .showcase-health-card {
+  background: #ffffff;
+  border-color: rgba(16, 185, 129, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .gauge-bg-circle,
+.home-root.theme-light .gauge-bg-circle {
+  stroke: rgba(0, 0, 0, 0.08);
+}
+
+body.theme-light .gauge-score-number,
+.home-root.theme-light .gauge-score-number {
+  color: #0f172a;
+}
+
+body.theme-light .health-meta-title,
+.home-root.theme-light .health-meta-title {
+  color: #0f172a;
+}
+
+body.theme-light .health-meta-desc,
+.home-root.theme-light .health-meta-desc {
+  color: #64748b;
+}
+
+body.theme-light .showcase-spending-visual,
+.home-root.theme-light .showcase-spending-visual {
+  background: #ffffff;
+  border-color: rgba(16, 185, 129, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .spending-visual-title,
+.home-root.theme-light .spending-visual-title {
+  color: #64748b;
+}
+
+body.theme-light .spending-bar-info,
+.home-root.theme-light .spending-bar-info {
+  color: #0f172a;
+}
+
+body.theme-light .spending-bar-track,
+.home-root.theme-light .spending-bar-track {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .ai-stream-card,
+.home-root.theme-light .ai-stream-card {
+  background: linear-gradient(145deg, #ffffff, #f0fdf4);
+  border-color: rgba(16, 185, 129, 0.25);
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.08);
+}
+
+body.theme-light .ai-stream-quote,
+.home-root.theme-light .ai-stream-quote {
+  color: #1e293b;
+}
+
+body.theme-light .ai-quick-btn,
+.home-root.theme-light .ai-quick-btn {
+  background: #f1f5f9;
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #0f172a;
+}
+
+body.theme-light .ai-quick-btn:hover,
+.home-root.theme-light .ai-quick-btn:hover {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: #10b981;
+  color: #047857;
+}
+
+body.theme-light .showcase-live-feed,
+.home-root.theme-light .showcase-live-feed {
+  background: #ffffff;
+  border-color: rgba(16, 185, 129, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .feed-header,
+.home-root.theme-light .feed-header {
+  color: #64748b;
+}
+
+body.theme-light .feed-item,
+.home-root.theme-light .feed-item {
+  background: #f8fafc;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .feed-merchant,
+.home-root.theme-light .feed-merchant {
+  color: #0f172a;
+}
+
+body.theme-light .feed-category,
+.home-root.theme-light .feed-category {
+  color: #64748b;
+}
+
+body.theme-light .feed-amount.expense,
+.home-root.theme-light .feed-amount.expense {
+  color: #0f172a;
+}
+
+/* 6. Feature Bento Grid */
+body.theme-light .section-title,
+.home-root.theme-light .section-title {
+  color: #0f172a;
+}
+
+body.theme-light .section-subtitle,
+.home-root.theme-light .section-subtitle {
+  color: #64748b;
+}
+
+body.theme-light .bento-card,
+.home-root.theme-light .bento-card {
+  background: #ffffff;
+  border-color: rgba(16, 185, 129, 0.18);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .bento-card:hover,
+.home-root.theme-light .bento-card:hover {
+  border-color: #10b981;
+  box-shadow: 0 16px 36px rgba(16, 185, 129, 0.12);
+}
+
+body.theme-light .bento-card-title,
+.home-root.theme-light .bento-card-title {
+  color: #0f172a;
+}
+
+body.theme-light .bento-card-desc,
+.home-root.theme-light .bento-card-desc {
+  color: #64748b;
+}
+
+body.theme-light .bento-icon-box,
+.home-root.theme-light .bento-icon-box {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+/* 7. Wealth Simulator */
+body.theme-light .calculator-card,
+.home-root.theme-light .calculator-card {
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border-color: rgba(16, 185, 129, 0.22);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.06), 0 0 30px rgba(16, 185, 129, 0.05);
+}
+
+body.theme-light .calc-left h3,
+.home-root.theme-light .calc-left h3 {
+  color: #0f172a;
+}
+
+body.theme-light .calc-left p,
+.home-root.theme-light .calc-left p {
+  color: #64748b;
+}
+
+body.theme-light .calc-slider-header,
+.home-root.theme-light .calc-slider-header {
+  color: #0f172a;
+}
+
+body.theme-light .calc-right,
+.home-root.theme-light .calc-right {
+  background: #f1f5f9;
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+body.theme-light .calc-result-label,
+.home-root.theme-light .calc-result-label {
+  color: #64748b;
+}
+
+body.theme-light .calc-result-note,
+.home-root.theme-light .calc-result-note {
+  color: #64748b;
+}
+
+/* 8. Stats Ribbon */
+body.theme-light .stat-box,
+.home-root.theme-light .stat-box {
+  background: #ffffff;
+  border-color: rgba(16, 185, 129, 0.18);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+
+body.theme-light .stat-box:hover,
+.home-root.theme-light .stat-box:hover {
+  border-color: #10b981;
+  box-shadow: 0 14px 30px rgba(16, 185, 129, 0.12);
+}
+
+body.theme-light .stat-box-val,
+.home-root.theme-light .stat-box-val {
+  background: linear-gradient(135deg, #0f172a 30%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+body.theme-light .stat-box-label,
+.home-root.theme-light .stat-box-label {
+  color: #64748b;
+}
+
+/* 9. CTA Banner */
+body.theme-light .cta-banner-card,
+.home-root.theme-light .cta-banner-card {
+  background: radial-gradient(ellipse 90% 70% at 50% 0%, rgba(16, 185, 129, 0.14) 0%, rgba(240, 253, 244, 0.95) 70%), #ffffff;
+  border-color: rgba(16, 185, 129, 0.28);
+  box-shadow: 0 20px 60px rgba(16, 185, 129, 0.1);
+}
+
+body.theme-light .cta-banner-title,
+.home-root.theme-light .cta-banner-title {
+  color: #0f172a;
+}
+
+body.theme-light .cta-banner-sub,
+.home-root.theme-light .cta-banner-sub {
+  color: #475569;
+}
+
+/* 10. Footer */
+body.theme-light .home-footer,
+.home-root.theme-light .home-footer {
+  background: #ffffff;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+body.theme-light .footer-brand,
+.home-root.theme-light .footer-brand {
+  color: #0f172a;
+}
+
+body.theme-light .footer-link-btn,
+.home-root.theme-light .footer-link-btn {
+  color: #64748b;
+}
+
+body.theme-light .footer-link-btn:hover,
+.home-root.theme-light .footer-link-btn:hover {
+  color: #0f172a;
+}
+
+body.theme-light .footer-copyright,
+.home-root.theme-light .footer-copyright {
+  color: #64748b;
 }

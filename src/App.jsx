@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useFinance } from './context/FinanceContext';
 import HomePage from './components/HomePage';
 import Login from './components/Login';
 import CreateAccount from './components/CreateAccount';
@@ -13,254 +14,47 @@ import BudgetPrediction from './components/BudgetPrediction';
 import ReceiptScanner from './components/ReceiptScanner';
 import SpendingCard from './components/SpendingCard';
 import NoSpendHeatmap from './components/NoSpendHeatmap';
-import { calculateFinancialSummary, getCategoryTotals, formatCurrency } from './utils/finance';
-
-// AI insights
-const initialInsights = [
-  'You spent 72% of your monthly budget. Nice pace — keep dining under ₹2,000.',
-  'Dining out is 38% above your 3-month average this week.',
-  'Moving ₹5,000 on payday keeps your savings goal on track.',
-];
-
-// Subscriptions
-const initialSubscriptions = [
-  { name: 'JioCinema Premium', note: 'Entertainment · renews 14 Oct', value: '₹149' },
-  { name: 'Cult.fit Gym', note: 'Fitness · renews 02 Oct', value: '₹1,499' },
-  { name: 'Hotstar Super', note: 'Not opened in 40 days', value: '₹299' },
-];
-
-// Bills
-const initialBills = [
-  { name: 'House Rent', note: 'Due 03 Oct', value: '₹15,000' },
-  { name: 'Electricity (BSES)', note: 'Due 09 Oct', value: '₹1,850' },
-  { name: 'Airtel Broadband', note: 'Due 17 Oct', value: '₹999' },
-];
-
-// Investments
-const initialInvestments = [
-  { name: 'Nifty 50 Index Fund', note: 'Balanced · moderate risk', value: '12.4% / yr', isPositive: true },
-  { name: 'Tata Digital India Fund', note: 'Growth · higher risk', value: '18.2% / yr', isPositive: true },
-  { name: 'HDFC Corporate Bond', note: 'Income · low risk', value: '7.1% / yr', isPositive: true },
-];
-
-// Initial Transactions Dataset
-const initialTransactions = [
-  { id: 1, merchant: 'Swiggy', amount: -850, category: 'Food', date: '2026-09-10' },
-  { id: 2, merchant: 'Salary', amount: 45000, category: 'Income', date: '2026-09-01' },
-  { id: 3, merchant: 'Flipkart', amount: -1299, category: 'Shopping', date: '2026-08-28' },
-  { id: 4, merchant: 'Hotstar', amount: -499, category: 'Entertainment', date: '2026-08-25' },
-  { id: 5, merchant: 'Ola Cabs', amount: -350, category: 'Transport', date: '2026-08-22' },
-  { id: 6, merchant: 'Freelance Work', amount: 12000, category: 'Income', date: '2026-08-18' },
-  { id: 7, merchant: 'Zomato', amount: -620, category: 'Food', date: '2026-09-15' },
-  { id: 8, merchant: 'Netflix', amount: -649, category: 'Entertainment', date: '2026-09-14' },
-  { id: 9, merchant: 'Electricity (BSES)', amount: -1850, category: 'Bills', date: '2026-09-09' },
-  { id: 10, merchant: 'Airtel Broadband', amount: -999, category: 'Bills', date: '2026-09-17' },
-  { id: 11, merchant: 'Spotify', amount: -199, category: 'Entertainment', date: '2026-09-12' },
-  { id: 12, merchant: 'BigBasket', amount: -1420, category: 'Groceries', date: '2026-09-11' },
-  { id: 13, merchant: 'House Rent', amount: -15000, category: 'Bills', date: '2026-09-03' },
-  { id: 14, merchant: 'Cult.fit Gym', amount: -1499, category: 'Health', date: '2026-09-02' },
-  { id: 15, merchant: 'Dunzo', amount: -380, category: 'Transport', date: '2026-09-09' },
-  { id: 16, merchant: ' Domino\'s', amount: -540, category: 'Food', date: '2026-09-08' },
-  { id: 17, merchant: 'Amazon Prime', amount: -149, category: 'Entertainment', date: '2026-09-01' },
-  { id: 18, merchant: 'Water Bill', amount: -320, category: 'Bills', date: '2026-09-05' },
-];
+import { formatCurrency } from './utils/finance';
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [transactions, setTransactions] = useState(initialTransactions);
-  const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
-  const [addExpenseDefaultCategory, setAddExpenseDefaultCategory] = useState('Food');
-  const [theme, setTheme] = useState('dark');
-  const [activePage, setActivePage] = useState('home');
-  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
-  const [isSidebarOpenMobile, setIsSidebarOpenMobile] = useState(false);
+  const {
+    transactions,
+    setTransactions,
+    addTransaction,
+    financialSummary,
+    spendingCategories,
+    billReminders,
+    subscriptions,
+    investments,
+    insights,
+    markBillPaid,
+    removeBill,
+    removeSubscription,
 
-  // Track which bills are paid or deleted
-  const [paidBills, setPaidBills] = useState(new Set());
-  const [deletedBills, setDeletedBills] = useState(new Set());
-  // Track which subscriptions are deleted
-  const [deletedSubscriptions, setDeletedSubscriptions] = useState(new Set());
+    isLoggedIn,
+    setIsLoggedIn,
+    isRegistering,
+    setIsRegistering,
+    login,
+    logout,
 
-  // Derive single-source-of-truth financial metrics
-  const financialSummary = calculateFinancialSummary(transactions);
-  const categoryTotals = getCategoryTotals(transactions);
+    theme,
+    toggleTheme,
 
-  // Derive bill reminders from transactions (Bills category).
-  // Hide deleted bills and mark paid bills.
-  const billReminders = transactions
-    .filter((t) => t.category === 'Bills' && !deletedBills.has(t.id))
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .map((t) => ({
-      id: t.id,
-      name: t.merchant,
-      note: `Due ${new Date(t.date).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}`,
-      value: formatCurrency(t.amount),
-      paid: paidBills.has(t.id),
-    }));
-
-  // Bill actions
-  const markBillPaid = (id) => setPaidBills((prev) => new Set([...prev, id]));
-  const removeBill = (id) => setDeletedBills((prev) => new Set([...prev, id]));
-
-  // Subscription actions
-  const removeSubscription = (name) =>
-    setDeletedSubscriptions((prev) => new Set([...prev, name]));
-
-  // Safe handler to append a new transaction object to transactions state array
-  const handleAddTransaction = (newTx) => {
-    setTransactions((prev) => {
-      const currentArr = Array.isArray(prev) ? prev : [];
-      const formattedTx = {
-        id: Date.now(),
-        merchant: newTx.merchant || 'Expense',
-        amount: typeof newTx.amount === 'number' ? newTx.amount : -Math.abs(Number(newTx.amount) || 0),
-        category: newTx.category || 'Food',
-        date: newTx.date || new Date().toISOString().split('T')[0],
-      };
-      return [formattedTx, ...currentArr];
-    });
-  };
-
-  // Dynamic spending categories array reconciled with actual transaction totals
-  const spendingCategories = [
-    {
-      id: 'rent',
-      icon: '🏠',
-      name: 'Rent',
-      amount: formatCurrency(categoryTotals['Rent'] || 15000),
-      subtext: 'Spent this month',
-      colorClass: 'tile-blue',
-    },
-    {
-      id: 'transport',
-      icon: '🚌',
-      name: 'Transport',
-      amount: formatCurrency(categoryTotals['Transport'] || 4500),
-      subtext: 'Spent this month',
-      colorClass: 'tile-pink',
-    },
-    {
-      id: 'food',
-      icon: '🍴',
-      name: 'Food & Groceries',
-      amount: formatCurrency(categoryTotals['Food'] || 8500),
-      subtext: 'Spent this month',
-      colorClass: 'tile-lime',
-    },
-    {
-      id: 'health',
-      icon: '❤️',
-      name: 'Health',
-      amount: formatCurrency(categoryTotals['Health'] || 3200),
-      subtext: 'Spent this month',
-      colorClass: 'tile-cyan',
-    },
-    {
-      id: 'personal',
-      icon: '👤',
-      name: 'Personal',
-      amount: formatCurrency(categoryTotals['Personal'] || 2800),
-      subtext: 'Spent this month',
-      colorClass: 'tile-purple',
-    },
-    {
-      id: 'entertainment',
-      icon: '🎮',
-      name: 'Entertainment',
-      amount: formatCurrency(categoryTotals['Entertainment'] || 2100),
-      subtext: 'Spent this month',
-      colorClass: 'tile-orange',
-    },
-    {
-      id: 'utilities',
-      icon: '⚡',
-      name: 'Utilities',
-      amount: formatCurrency(categoryTotals['Utilities'] || 1950),
-      subtext: 'Spent this month',
-      colorClass: 'tile-blue-light',
-    },
-    {
-      id: 'emergency',
-      icon: '🛡️',
-      name: 'Emergency',
-      amount: formatCurrency(categoryTotals['Emergency'] || 5000),
-      subtext: 'Saved this month',
-      colorClass: 'tile-red',
-    },
-    {
-      id: 'hospital',
-      icon: '🏥',
-      name: 'Hospital',
-      amount: formatCurrency(categoryTotals['Hospital'] || 2600),
-      subtext: 'Spent this month',
-      colorClass: 'tile-cyan',
-    },
-    {
-      id: 'others',
-      icon: '⋯',
-      name: 'Others',
-      amount: formatCurrency(categoryTotals['Others'] || categoryTotals['Shopping'] || 1200),
-      subtext: 'Spent this month',
-      colorClass: 'tile-green',
-    },
-  ];
-
-  // Sync theme with body class
-  useEffect(() => {
-    document.body.className = theme === 'light' ? 'theme-light' : 'theme-dark';
-  }, [theme]);
-
-  // Check URL path on mount & popstate
-  useEffect(() => {
-    const syncRouteFromPath = () => {
-      const path = window.location.pathname;
-      if (path === '/receipt-scanner') {
-        setActivePage('scanner');
-      } else if (path === '/ai-coach') {
-        setActivePage('aicoach');
-      } else if (path === '/health') {
-        setActivePage('health');
-      } else if (path === '/budget') {
-        setActivePage('budget');
-      } else if (path === '/no-spend' || path === '/nospend' || path === '/calendar' || path === '/activity-calendar') {
-        setActivePage('nospend');
-      } else if (path === '/dashboard') {
-        setActivePage('dashboard');
-      } else if (path === '/login') {
-        setActivePage('login');
-      } else if (path === '/register') {
-        setActivePage('register');
-      } else {
-        setActivePage('home');
-      }
-    };
-
-    syncRouteFromPath();
-    window.addEventListener('popstate', syncRouteFromPath);
-    return () => window.removeEventListener('popstate', syncRouteFromPath);
-  }, []);
-
-  const navigateTo = (page, path) => {
-    setActivePage(page);
-    setIsSidebarOpenMobile(false);
-    if (window.history && window.history.pushState) {
-      window.history.pushState({}, '', path);
-    }
-  };
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  };
-
-  const toggleSidebar = () => {
-    setIsSidebarVisible((prev) => !prev);
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      setIsSidebarOpenMobile((prev) => !prev);
-    } else {
-      setIsSidebarOpenMobile(false);
-    }
-  };
+    activePage,
+    navigateTo,
+    isSidebarVisible,
+    isSidebarOpenMobile,
+    setIsSidebarOpenMobile,
+    toggleSidebar,
+    closeMobileSidebar,
+    isAddExpenseOpen,
+    setIsAddExpenseOpen,
+    addExpenseDefaultCategory,
+    setAddExpenseDefaultCategory,
+    openAddExpense,
+    closeAddExpense,
+  } = useFinance();
 
   // 1. Dedicated Minimal Animated Home Page (Public Landing - Shown before login)
   if (activePage === 'home') {
@@ -364,7 +158,7 @@ function App() {
         <main className="receipt-scanner-main">
           <ReceiptScanner
             onBackToDashboard={() => navigateTo('dashboard', '/dashboard')}
-            onAddExpense={handleAddTransaction}
+            onAddExpense={addTransaction}
             onToggleSidebar={toggleSidebar}
           />
         </main>
@@ -496,7 +290,7 @@ function App() {
           </div>
           <NoSpendHeatmap
             transactions={transactions}
-            onAddExpense={handleAddTransaction}
+            onAddExpense={addTransaction}
           />
         </main>
       </div>
@@ -510,9 +304,7 @@ function App() {
       )}
       {isAddExpenseOpen && (
         <AddExpense
-          transactions={transactions}
-          setTransactions={setTransactions}
-          onClose={() => setIsAddExpenseOpen(false)}
+          onClose={closeAddExpense}
           defaultCategory={addExpenseDefaultCategory}
         />
       )}
@@ -563,7 +355,7 @@ function App() {
             >
               🧾 Scan Receipt
             </button>
-            <button type="button" className="btn-primary" onClick={() => { setAddExpenseDefaultCategory('Food'); setIsAddExpenseOpen(true); }}>
+            <button type="button" className="btn-primary" onClick={() => openAddExpense('Food')}>
               + Add Transaction
             </button>
             <button
@@ -638,7 +430,7 @@ function App() {
             {/* AI Spending Insights */}
             <Panel title="AI spending insights">
               <ul className="insights-list">
-                {initialInsights.map((text) => (
+                {insights.map((text) => (
                   <li key={text} className="insight-item">
                     <span className="insight-bullet"></span>
                     <span>{text}</span>
@@ -655,15 +447,13 @@ function App() {
 
               <Panel title="Detected subscriptions" action="Show more">
               <div className="list-container">
-                {initialSubscriptions
-                  .filter((item) => !deletedSubscriptions.has(item.name))
-                  .map((item) => (
-                    <ListRow
-                      key={item.name}
-                      {...item}
-                      onDelete={() => removeSubscription(item.name)}
-                    />
-                  ))}
+                {subscriptions.map((item) => (
+                  <ListRow
+                    key={item.name}
+                    {...item}
+                    onDelete={() => removeSubscription(item.name)}
+                  />
+                ))}
               </div>
                 <p className="panel-footer-note">
                   Cancel 1 unused subscription to save ₹299 a month.
@@ -677,10 +467,7 @@ function App() {
             <Panel
               title="Bill reminders"
               action="Add bill"
-              onAction={() => {
-                setAddExpenseDefaultCategory('Bills');
-                setIsAddExpenseOpen(true);
-              }}
+              onAction={() => openAddExpense('Bills')}
             >
               <div className="list-container">
                 {billReminders.map((item) => (
@@ -696,7 +483,7 @@ function App() {
 
             <Panel title="Investment suggestions">
               <div className="list-container">
-                {initialInvestments.map((item) => (
+                {investments.map((item) => (
                   <ListRow key={item.name} {...item} />
                 ))}
               </div>

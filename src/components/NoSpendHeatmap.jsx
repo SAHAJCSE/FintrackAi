@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './NoSpendHeatmap.css';
 import { formatCurrency } from '../utils/finance';
+import { useFinance } from '../context/FinanceContext';
 
 // Helper to format Date to YYYY-MM-DD
 function formatDateKey(date) {
@@ -23,7 +24,10 @@ function formatReadableDate(dateStr) {
   });
 }
 
-function NoSpendHeatmap({ transactions = [], onAddExpense }) {
+function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAddExpense }) {
+  const finance = useFinance();
+  const transactions = propTransactions || finance.transactions || [];
+  const onAddExpense = propOnAddExpense || finance.addTransaction;
   // Clear any legacy check-in or essential categories storage
   useEffect(() => {
     try {

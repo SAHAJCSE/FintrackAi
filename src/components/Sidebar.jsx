@@ -1,21 +1,23 @@
 import React from 'react';
+import { useFinance } from '../context/FinanceContext';
 
-function Sidebar({
-  activePage = 'home',
-  theme = 'dark',
-  isVisible = true,
-  isOpenMobile = false,
-  onCloseMobile,
-  onToggleTheme,
-  onHomeClick,
-  onDashboardClick,
-  onHealthClick,
-  onBudgetClick,
-  onAiCoachClick,
-  onReceiptScannerClick,
-  onNoSpendClick,
-  onLogout,
-}) {
+function Sidebar(props) {
+  const finance = useFinance();
+  const activePage = props.activePage || finance.activePage;
+  const theme = props.theme || finance.theme;
+  const isVisible = props.isVisible !== undefined ? props.isVisible : finance.isSidebarVisible;
+  const isOpenMobile = props.isOpenMobile !== undefined ? props.isOpenMobile : finance.isSidebarOpenMobile;
+  const onCloseMobile = props.onCloseMobile || finance.closeMobileSidebar;
+  const onToggleTheme = props.onToggleTheme || finance.toggleTheme;
+  const onHomeClick = props.onHomeClick || (() => finance.navigateTo('home', '/'));
+  const onDashboardClick = props.onDashboardClick || (() => finance.navigateTo('dashboard', '/dashboard'));
+  const onHealthClick = props.onHealthClick || (() => finance.navigateTo('health', '/health'));
+  const onBudgetClick = props.onBudgetClick || (() => finance.navigateTo('budget', '/budget'));
+  const onAiCoachClick = props.onAiCoachClick || (() => finance.navigateTo('aicoach', '/ai-coach'));
+  const onReceiptScannerClick = props.onReceiptScannerClick || (() => finance.navigateTo('scanner', '/receipt-scanner'));
+  const onNoSpendClick = props.onNoSpendClick || (() => finance.navigateTo('nospend', '/no-spend'));
+  const onLogout = props.onLogout || finance.logout;
+
   const handleNavClick = (callback) => {
     if (callback) callback();
     if (onCloseMobile) onCloseMobile();

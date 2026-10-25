@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useFinance } from '../context/FinanceContext';
 import '../home.css';
 
 const AI_INSIGHT_SAMPLES = [
@@ -24,16 +25,25 @@ const AI_INSIGHT_SAMPLES = [
   },
 ];
 
-function HomePage({
-  onNavigateToDashboard,
-  onNavigateToLogin,
-  onNavigateToScanner,
-  onNavigateToAiCoach,
-  onLogout,
-  theme = 'dark',
-  onToggleTheme,
-  isLoggedIn = false,
-}) {
+function HomePage(props) {
+  const finance = useFinance();
+  const theme = props.theme || finance.theme;
+  const onToggleTheme = props.onToggleTheme || finance.toggleTheme;
+  const isLoggedIn = props.isLoggedIn !== undefined ? props.isLoggedIn : finance.isLoggedIn;
+  const onNavigateToDashboard = props.onNavigateToDashboard || (() => {
+    if (!finance.isLoggedIn) finance.navigateTo('login', '/login');
+    else finance.navigateTo('dashboard', '/dashboard');
+  });
+  const onNavigateToLogin = props.onNavigateToLogin || (() => finance.navigateTo('login', '/login'));
+  const onNavigateToScanner = props.onNavigateToScanner || (() => {
+    if (!finance.isLoggedIn) finance.navigateTo('login', '/login');
+    else finance.navigateTo('scanner', '/receipt-scanner');
+  });
+  const onNavigateToAiCoach = props.onNavigateToAiCoach || (() => {
+    if (!finance.isLoggedIn) finance.navigateTo('login', '/login');
+    else finance.navigateTo('aicoach', '/ai-coach');
+  });
+  const onLogout = props.onLogout || finance.logout;
   const [activeTipIdx, setActiveTipIdx] = useState(0);
   const [simIncome, setSimIncome] = useState(65000);
   const [simExpense, setSimExpense] = useState(38000);
@@ -67,7 +77,7 @@ function HomePage({
   };
 
   return (
-    <div className="home-root">
+    <div className={`home-root ${theme === 'light' ? 'theme-light' : 'theme-dark'}`} data-theme={theme}>
       {/* Ambient Animated Glowing Backdrop */}
       <div className="home-bg-ambient" aria-hidden="true">
         <div className="ambient-orb ambient-orb-1" />
@@ -132,6 +142,7 @@ function HomePage({
             {/* Theme Toggle */}
             <button
               type="button"
+              id="home-theme-toggle-btn"
               className="nav-theme-toggle"
               onClick={onToggleTheme}
               title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}

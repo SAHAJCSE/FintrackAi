@@ -1,7 +1,16 @@
 import React, { useState } from 'react';
+import { useFinance } from '../context/FinanceContext';
 import '../login.css';
 
 function CreateAccount({ onLogin, onBackToLogin, onBackToHome }) {
+  const finance = useFinance();
+  const handleLogin = onLogin || finance.login;
+  const handleBackToLogin = onBackToLogin || (() => {
+    finance.setIsRegistering(false);
+    finance.navigateTo('login', '/login');
+  });
+  const handleBackToHome = onBackToHome || (() => finance.navigateTo('home', '/'));
+
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,7 +47,7 @@ function CreateAccount({ onLogin, onBackToLogin, onBackToHome }) {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      onLogin();
+      handleLogin();
     }, 400);
   };
 
@@ -80,11 +89,11 @@ function CreateAccount({ onLogin, onBackToLogin, onBackToHome }) {
         {/* Right form panel */}
         <main className="login-form-panel">
           <div className="login-card">
-            {onBackToHome && (
+            {handleBackToHome && (
               <button
                 type="button"
                 className="btn-back-home"
-                onClick={onBackToHome}
+                onClick={handleBackToHome}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -189,7 +198,7 @@ function CreateAccount({ onLogin, onBackToLogin, onBackToHome }) {
               <button
                 type="button"
                 className="signup-link"
-                onClick={onBackToLogin}
+                onClick={handleBackToLogin}
               >
                 Sign in
               </button>
