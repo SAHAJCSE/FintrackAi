@@ -12,6 +12,7 @@ import FinancialHealth from './components/FinancialHealth';
 import BudgetPrediction from './components/BudgetPrediction';
 import ReceiptScanner from './components/ReceiptScanner';
 import SpendingCard from './components/SpendingCard';
+import NoSpendHeatmap from './components/NoSpendHeatmap';
 import { calculateFinancialSummary, getCategoryTotals, formatCurrency } from './utils/finance';
 
 // AI insights
@@ -222,6 +223,8 @@ function App() {
         setActivePage('health');
       } else if (path === '/budget') {
         setActivePage('budget');
+      } else if (path === '/no-spend' || path === '/nospend' || path === '/calendar' || path === '/activity-calendar') {
+        setActivePage('nospend');
       } else if (path === '/dashboard') {
         setActivePage('dashboard');
       } else if (path === '/login') {
@@ -343,6 +346,7 @@ function App() {
     onBudgetClick: () => navigateTo('budget', '/budget'),
     onAiCoachClick: () => navigateTo('aicoach', '/ai-coach'),
     onReceiptScannerClick: () => navigateTo('scanner', '/receipt-scanner'),
+    onNoSpendClick: () => navigateTo('nospend', '/no-spend'),
     onLogout: () => {
       setIsLoggedIn(false);
       navigateTo('home', '/');
@@ -459,6 +463,41 @@ function App() {
             </button>
           </div>
           <BudgetPrediction transactions={transactions} />
+        </main>
+      </div>
+    );
+  }
+
+  // Isolated No-Spend Streak Heatmap page
+  if (activePage === 'nospend') {
+    return (
+      <div className="ns-page-wrapper">
+        {isSidebarOpenMobile && (
+          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
+        )}
+        <Sidebar {...sidebarProps} />
+        <main className="ns-main-container">
+          <div className="view-header-bar">
+            <button
+              type="button"
+              className="sidebar-toggle-btn"
+              onClick={toggleSidebar}
+              title="Toggle Sidebar Menu"
+            >
+              ☰
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => navigateTo('dashboard', '/dashboard')}
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+          <NoSpendHeatmap
+            transactions={transactions}
+            onAddExpense={handleAddTransaction}
+          />
         </main>
       </div>
     );

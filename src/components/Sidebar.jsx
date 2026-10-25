@@ -13,6 +13,7 @@ function Sidebar({
   onBudgetClick,
   onAiCoachClick,
   onReceiptScannerClick,
+  onNoSpendClick,
   onLogout,
 }) {
   const handleNavClick = (callback) => {
@@ -89,6 +90,15 @@ function Sidebar({
         >
           <span className="nav-dot" />
           <span>Scanner</span>
+        </div>
+
+        <div
+          className={`nav-item ${activePage === 'nospend' || activePage === 'no-spend' || activePage === 'calendar' ? 'active' : ''}`}
+          onClick={() => handleNavClick(onNoSpendClick)}
+          title="Activity Calendar"
+        >
+          <span className="nav-dot" />
+          <span>📅 Activity Calendar</span>
         </div>
 
         {onLogout && (
