@@ -648,6 +648,14 @@ function App() {
             </button>
             <button
               type="button"
+              className="theme-toggle-btn"
+              onClick={toggleTheme}
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+            >
+              {theme === 'dark' ? 'Light Theme' : 'Dark Theme'}
+            </button>
+            <button
+              type="button"
               className="btn-primary"
               onClick={() => navigateTo('dashboard', '/dashboard')}
             >
@@ -752,25 +760,6 @@ function App() {
               title={t('View keyboard shortcuts for every tab')}
             >
               ⌨️ {t('Shortcuts')}
-            </button>
-            <button
-              type="button"
-              className="btn-secondary scanner-shortcut"
-              onClick={() => navigateTo('scanner', '/receipt-scanner')}
-              aria-keyshortcuts="Control+Alt+S Meta+Alt+S"
-              title={t('Open the receipt scanner with Ctrl+Alt+S.')}
-            >
-              {t('Receipt Scanner')}
-              <kbd>Ctrl+Alt+S</kbd>
-            </button>
-            <button
-              type="button"
-              className="btn-secondary instant-add-header-btn"
-              onClick={() => navigateTo('instant-add', '/instant-add')}
-              title="Quick natural language transaction add (Ctrl+Alt+I)"
-            >
-              ⚡ {t('Instant Add')}
-              <kbd>Ctrl+Alt+I</kbd>
             </button>
             <button type="button" className="btn-primary" onClick={() => openAddExpense('Food')}>
               {t('+ Add Transaction')}
