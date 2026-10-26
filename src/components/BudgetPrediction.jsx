@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useFinance } from '../context/FinanceContext';
+import { formatCurrency } from '../utils/finance';
 import { translate } from '../utils/i18n';
 
 function BudgetPrediction({ transactions: propTransactions }) {
@@ -62,11 +63,15 @@ function BudgetPrediction({ transactions: propTransactions }) {
     <div className="budget-prediction">
       <p className="prediction-amount">₹{prediction.toLocaleString('en-IN')}</p>
       <p className="prediction-sub">{t('Total spending across all categories for this period.')}</p>
-      {diningTotal > 0 && (
+      {activeWarning ? (
+        <p className="prediction-warning">
+          {activeWarning}
+        </p>
+      ) : diningTotal > 0 ? (
         <p className="prediction-warning">
           {t('Possible overspend on dining by week 5.').replace('{amount}', `₹${Math.round(diningTotal * 0.1 / 10) * 10}`)}
         </p>
-      )}
+      ) : null}
 
       {categoryEntries.length > 0 ? (
         <div className="budget-breakdown">
