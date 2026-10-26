@@ -72,7 +72,36 @@ export const initialTransactions = [
   { id: 18, merchant: 'Water Bill', amount: -320, category: 'Bills', date: '2026-09-05' },
 ];
 
-let latestTransactionId = Date.now();
+/**
+ * Safely initialize theme preference from localStorage.
+ */
+function getInitialTheme() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_THEME);
+    return saved === 'light' ? 'light' : 'dark';
+  } catch {
+    return 'dark';
+  }
+}
+
+/**
+ * Safely initialize monthly category budgets from localStorage.
+ */
+function getInitialBudgets() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_BUDGETS);
+    if (saved === null) {
+      return initialCategoryBudgets;
+    }
+    const parsed = JSON.parse(saved);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return { ...initialCategoryBudgets, ...parsed };
+    }
+    return initialCategoryBudgets;
+  } catch {
+    return initialCategoryBudgets;
+  }
+}
 
 export const FinanceContext = createContext(null);
 
@@ -80,7 +109,7 @@ export function FinanceProvider({ children }) {
   // 1. Transactions State (Single Source of Truth)
   const [transactions, setTransactions] = useState(() => {
     try {
-      const saved = localStorage.getItem('fintrack_transactions');
+      const saved = localStorage.getItem(STORAGE_KEY_TRANSACTIONS);
       if (saved !== null) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) return parsed;
@@ -105,12 +134,18 @@ export function FinanceProvider({ children }) {
 
   useEffect(() => {
     try {
-      const savedTheme = localStorage.getItem('fintrack_theme');
-      return savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'dark';
-    } catch {
-      return 'dark';
+      localStorage.setItem(STORAGE_KEY_BUDGETS, JSON.stringify(categoryBudgets));
+    } catch (error) {
+      console.error('Failed to save category budgets to localStorage:', error);
     }
-  });
+  }, [categoryBudgets]);
+
+  // 3. Authentication State
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+
+  // 4. UI & Theme State
+  const [theme, setTheme] = useState(getInitialTheme);
   const [language, setLanguage] = useState(() => {
     try {
       const savedLanguage = localStorage.getItem('fintrack_language');
@@ -119,9 +154,6 @@ export function FinanceProvider({ children }) {
       return 'en';
     }
   });
-
-  // 4. UI & Theme State
-  const [theme, setTheme] = useState(getInitialTheme);
   const [activePage, setActivePage] = useState('home');
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [isSidebarOpenMobile, setIsSidebarOpenMobile] = useState(false);
@@ -426,39 +458,7 @@ export function FinanceProvider({ children }) {
     return initialSubscriptions.filter((sub) => !deletedSubscriptions.has(sub.name));
   }, [deletedSubscriptions]);
 
-  // 6. Action Handlers (All wrapped in useCallback for performance)
-  const addTransaction = useCallback((newTx) => {
-    if (!newTx || typeof newTx !== 'object') {
-      throw new TypeError('A transaction must be provided.');
-    }
-
-    const amount = Number(newTx.amount);
-    if (!Number.isFinite(amount) || amount === 0) {
-      throw new TypeError('A transaction must have a valid non-zero amount.');
-    }
-
-    const transactionDate = typeof newTx.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(newTx.date)
-      ? newTx.date
-      : new Date().toISOString().split('T')[0];
-    const id = Math.max(Date.now(), latestTransactionId + 1);
-    latestTransactionId = id;
-
-    setTransactions((prev) => {
-      const currentArr = Array.isArray(prev) ? prev : [];
-      const formattedTx = {
-        id,
-        merchant: String(newTx.merchant || 'Expense').trim(),
-        amount,
-        category: String(newTx.category || 'Food').trim(),
-        date: transactionDate,
-      };
-      return [formattedTx, ...currentArr];
-    });
-  }, []);
-
-  const deleteTransaction = useCallback((id) => {
-    setTransactions((prev) => prev.filter((tx) => tx.id !== id));
-  }, []);
+  // 8. Other Action Handlers
 
   const markBillPaid = useCallback((id) => {
     setPaidBills((prev) => new Set([...prev, id]));
