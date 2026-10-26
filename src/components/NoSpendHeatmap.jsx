@@ -33,6 +33,7 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
     try {
       localStorage.removeItem('fintrack_nospend_checkins');
       localStorage.removeItem('fintrack_essential_categories');
+      localStorage.removeItem('fintrack_user_calendar_txs');
     } catch (e) {
       // ignore
     }
@@ -50,42 +51,16 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
   const [viewYear, setViewYear] = useState(currentYear);
   const [viewMonth, setViewMonth] = useState(today.getMonth()); // 0-11
 
-  // Local state for user-logged expenses on calendar (persisted in localStorage)
-  const [customTransactions, setCustomTransactions] = useState(() => {
-    try {
-      const stored = localStorage.getItem('fintrack_user_calendar_txs');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch (e) {
-      console.warn('Error reading user calendar txs:', e);
-    }
-    return [];
-  });
-
   // Quick expense form state in Selected Date Inspector
   const [isAddingExpense, setIsAddingExpense] = useState(false);
   const [newAmount, setNewAmount] = useState('');
   const [newMerchant, setNewMerchant] = useState('');
   const [newCategory, setNewCategory] = useState('Food');
 
-  // Filter ONLY real user-created transactions (exclude all pre-loaded sample data)
+  // Shared transactions from Context as single source of truth
   const userTransactions = useMemo(() => {
-    const fromProps = (Array.isArray(transactions) ? transactions : []).filter(
-      (tx) => tx && (tx.userAdded || (typeof tx.id === 'number' && tx.id > 1000000000))
-    );
-    // Combine with local customTransactions, avoiding duplicates by id
-    const seenIds = new Set(fromProps.map((t) => t.id));
-    const combined = [...fromProps];
-    customTransactions.forEach((tx) => {
-      if (!seenIds.has(tx.id)) {
-        combined.push(tx);
-        seenIds.add(tx.id);
-      }
-    });
-    return combined;
-  }, [transactions, customTransactions]);
+    return Array.isArray(transactions) ? transactions : [];
+  }, [transactions]);
 
   // Group user transactions by date
   const txByDate = useMemo(() => {
@@ -201,17 +176,6 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
       date: selectedDate,
       userAdded: true,
     };
-
-    // Update local state and persist
-    setCustomTransactions((prev) => {
-      const next = [newTx, ...prev];
-      try {
-        localStorage.setItem('fintrack_user_calendar_txs', JSON.stringify(next));
-      } catch (err) {
-        console.warn('Error saving custom txs:', err);
-      }
-      return next;
-    });
 
     if (onAddExpense) {
       onAddExpense(newTx);

@@ -1,7 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { calculateFinancialSummary, getCategoryTotals, formatCurrency } from '../utils/finance';
 
-// AI insights
+// LocalStorage Keys
+export const STORAGE_KEY_TRANSACTIONS = 'fintrack_transactions';
+export const STORAGE_KEY_THEME = 'fintrack_theme';
+export const STORAGE_KEY_BUDGETS = 'fintrack_budgets';
+
+// AI insights fallback
 export const initialInsights = [
   'You spent 72% of your monthly budget. Nice pace — keep dining under ₹2,000.',
   'Dining out is 38% above your 3-month average this week.',
@@ -29,6 +34,22 @@ export const initialInvestments = [
   { name: 'HDFC Corporate Bond', note: 'Income · low risk', value: '7.1% / yr', isPositive: true },
 ];
 
+// Default Category Budgets (monthly target limits in INR)
+export const initialCategoryBudgets = {
+  Food: 8000,
+  Rent: 15000,
+  Transport: 4000,
+  Shopping: 5000,
+  Entertainment: 3000,
+  Bills: 18000,
+  Health: 3500,
+  Groceries: 5000,
+  Personal: 3000,
+  Emergency: 5000,
+  Utilities: 3000,
+  Others: 3000,
+};
+
 // Initial Transactions Dataset
 export const initialTransactions = [
   { id: 1, merchant: 'Swiggy', amount: -850, category: 'Food', date: '2026-09-10' },
@@ -51,52 +72,101 @@ export const initialTransactions = [
   { id: 18, merchant: 'Water Bill', amount: -320, category: 'Bills', date: '2026-09-05' },
 ];
 
+/**
+ * Safely initialize transactions from localStorage.
+ * Distinguishes between "no saved data exists" (returns initial demo transactions)
+ * and "user intentionally has zero transactions" (returns []).
+ */
+function getInitialTransactions() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_TRANSACTIONS);
+    // If key does not exist at all, initialize with demo sample transactions
+    if (saved === null) {
+      return initialTransactions;
+    }
+    const parsed = JSON.parse(saved);
+    // If it's a valid array (including intentionally empty []), respect it
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+    console.warn('Invalid transaction data format in localStorage. Falling back to default data.');
+    return initialTransactions;
+  } catch (error) {
+    console.warn('Failed to parse transactions from localStorage. Falling back to default data.', error);
+    return initialTransactions;
+  }
+}
+
+/**
+ * Safely initialize theme preference from localStorage.
+ */
+function getInitialTheme() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_THEME);
+    return saved === 'light' ? 'light' : 'dark';
+  } catch {
+    return 'dark';
+  }
+}
+
+/**
+ * Safely initialize monthly category budgets from localStorage.
+ */
+function getInitialBudgets() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_BUDGETS);
+    if (saved === null) {
+      return initialCategoryBudgets;
+    }
+    const parsed = JSON.parse(saved);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return { ...initialCategoryBudgets, ...parsed };
+    }
+    return initialCategoryBudgets;
+  } catch {
+    return initialCategoryBudgets;
+  }
+}
+
 export const FinanceContext = createContext(null);
 
 export function FinanceProvider({ children }) {
   // 1. Transactions State (Single Source of Truth)
-  const [transactions, setTransactions] = useState(() => {
-    try {
-      const saved = localStorage.getItem('fintrack_transactions');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {
-      // fallback to initial
-    }
-    return initialTransactions;
-  });
+  const [transactions, setTransactions] = useState(getInitialTransactions);
 
-  // Persist transactions to localStorage
+  // Synchronize transactions with localStorage (handles adds, updates, deletes, and empty arrays)
   useEffect(() => {
     try {
-      localStorage.setItem('fintrack_transactions', JSON.stringify(transactions));
-    } catch {
-      // ignore
+      localStorage.setItem(STORAGE_KEY_TRANSACTIONS, JSON.stringify(transactions));
+    } catch (error) {
+      console.error('Failed to save transactions to localStorage:', error);
     }
   }, [transactions]);
 
-  // 2. Authentication State
+  // 2. Category Budgets State
+  const [categoryBudgets, setCategoryBudgets] = useState(getInitialBudgets);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_BUDGETS, JSON.stringify(categoryBudgets));
+    } catch (error) {
+      console.error('Failed to save category budgets to localStorage:', error);
+    }
+  }, [categoryBudgets]);
+
+  // 3. Authentication State
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
 
-  // 3. UI & Theme State
-  const [theme, setTheme] = useState(() => {
-    try {
-      return localStorage.getItem('fintrack_theme') || 'dark';
-    } catch {
-      return 'dark';
-    }
-  });
-
+  // 4. UI & Theme State
+  const [theme, setTheme] = useState(getInitialTheme);
   const [activePage, setActivePage] = useState('home');
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [isSidebarOpenMobile, setIsSidebarOpenMobile] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [addExpenseDefaultCategory, setAddExpenseDefaultCategory] = useState('Food');
 
-  // 4. Bills & Subscriptions Status
+  // 5. Bills & Subscriptions Status
   const [paidBills, setPaidBills] = useState(new Set());
   const [deletedBills, setDeletedBills] = useState(new Set());
   const [deletedSubscriptions, setDeletedSubscriptions] = useState(new Set());
@@ -106,9 +176,9 @@ export function FinanceProvider({ children }) {
     document.body.className = theme === 'light' ? 'theme-light' : 'theme-dark';
     document.documentElement.setAttribute('data-theme', theme);
     try {
-      localStorage.setItem('fintrack_theme', theme);
-    } catch {
-      // ignore
+      localStorage.setItem(STORAGE_KEY_THEME, theme);
+    } catch (error) {
+      console.error('Failed to save theme to localStorage:', error);
     }
   }, [theme]);
 
@@ -142,17 +212,84 @@ export function FinanceProvider({ children }) {
     return () => window.removeEventListener('popstate', syncRouteFromPath);
   }, []);
 
-  // 5. Single-source-of-truth Derived Financial Metrics (Memoized)
+  // 6. Centralized Transaction Actions (Immutable state updates)
+  const addTransaction = useCallback((newTx) => {
+    if (!newTx) return;
+    setTransactions((prev) => {
+      const currentArr = Array.isArray(prev) ? prev : [];
+      const numericAmount = typeof newTx.amount === 'number'
+        ? newTx.amount
+        : Number(newTx.amount) || 0;
+
+      const formattedTx = {
+        id: newTx.id || (Date.now() + Math.floor(Math.random() * 1000)),
+        merchant: newTx.merchant ? String(newTx.merchant).trim() : 'Expense',
+        amount: numericAmount,
+        category: newTx.category ? String(newTx.category).trim() : 'Food',
+        date: newTx.date || new Date().toISOString().split('T')[0],
+        ...newTx,
+      };
+
+      // Ensure clean normalized core fields
+      formattedTx.merchant = formattedTx.merchant || 'Expense';
+      formattedTx.amount = numericAmount;
+      formattedTx.category = formattedTx.category || 'Food';
+
+      return [formattedTx, ...currentArr];
+    });
+  }, []);
+
+  const updateTransaction = useCallback((id, updatedData) => {
+    if (id === undefined || id === null || !updatedData) return;
+    setTransactions((prev) => {
+      if (!Array.isArray(prev)) return [];
+      return prev.map((tx) => {
+        if (tx.id === id) {
+          const updated = {
+            ...tx,
+            ...updatedData,
+            id: tx.id, // ID must remain immutable
+          };
+          if (updatedData.amount !== undefined) {
+            updated.amount = typeof updatedData.amount === 'number'
+              ? updatedData.amount
+              : Number(updatedData.amount) || 0;
+          }
+          return updated;
+        }
+        return tx;
+      });
+    });
+  }, []);
+
+  const deleteTransaction = useCallback((id) => {
+    if (id === undefined || id === null) return;
+    setTransactions((prev) => {
+      if (!Array.isArray(prev)) return [];
+      return prev.filter((tx) => tx.id !== id);
+    });
+  }, []);
+
+  const updateCategoryBudget = useCallback((category, amount) => {
+    if (!category) return;
+    const numericAmount = Math.max(0, Number(amount) || 0);
+    setCategoryBudgets((prev) => ({
+      ...prev,
+      [category]: numericAmount,
+    }));
+  }, []);
+
+  // 7. Single-source-of-truth Derived Financial Metrics (Memoized)
   const financialSummary = useMemo(() => calculateFinancialSummary(transactions), [transactions]);
   const categoryTotals = useMemo(() => getCategoryTotals(transactions), [transactions]);
 
-  // Reconciled spending categories
+  // Derived Spending Categories (Calculated dynamically from transactions, no hardcoded fallbacks)
   const spendingCategories = useMemo(() => [
     {
       id: 'rent',
       icon: '🏠',
       name: 'Rent',
-      amount: formatCurrency(categoryTotals['Rent'] || 15000),
+      amount: formatCurrency(categoryTotals['Rent'] || 0),
       subtext: 'Spent this month',
       colorClass: 'tile-blue',
     },
@@ -160,7 +297,7 @@ export function FinanceProvider({ children }) {
       id: 'transport',
       icon: '🚌',
       name: 'Transport',
-      amount: formatCurrency(categoryTotals['Transport'] || 4500),
+      amount: formatCurrency(categoryTotals['Transport'] || 0),
       subtext: 'Spent this month',
       colorClass: 'tile-pink',
     },
@@ -168,7 +305,7 @@ export function FinanceProvider({ children }) {
       id: 'food',
       icon: '🍴',
       name: 'Food & Groceries',
-      amount: formatCurrency(categoryTotals['Food'] || 8500),
+      amount: formatCurrency(categoryTotals['Food'] || 0),
       subtext: 'Spent this month',
       colorClass: 'tile-lime',
     },
@@ -176,7 +313,7 @@ export function FinanceProvider({ children }) {
       id: 'health',
       icon: '❤️',
       name: 'Health',
-      amount: formatCurrency(categoryTotals['Health'] || 3200),
+      amount: formatCurrency(categoryTotals['Health'] || 0),
       subtext: 'Spent this month',
       colorClass: 'tile-cyan',
     },
@@ -184,7 +321,7 @@ export function FinanceProvider({ children }) {
       id: 'personal',
       icon: '👤',
       name: 'Personal',
-      amount: formatCurrency(categoryTotals['Personal'] || 2800),
+      amount: formatCurrency(categoryTotals['Personal'] || 0),
       subtext: 'Spent this month',
       colorClass: 'tile-purple',
     },
@@ -192,7 +329,7 @@ export function FinanceProvider({ children }) {
       id: 'entertainment',
       icon: '🎮',
       name: 'Entertainment',
-      amount: formatCurrency(categoryTotals['Entertainment'] || 2100),
+      amount: formatCurrency(categoryTotals['Entertainment'] || 0),
       subtext: 'Spent this month',
       colorClass: 'tile-orange',
     },
@@ -200,7 +337,7 @@ export function FinanceProvider({ children }) {
       id: 'utilities',
       icon: '⚡',
       name: 'Utilities',
-      amount: formatCurrency(categoryTotals['Utilities'] || 1950),
+      amount: formatCurrency(categoryTotals['Utilities'] || 0),
       subtext: 'Spent this month',
       colorClass: 'tile-blue-light',
     },
@@ -208,7 +345,7 @@ export function FinanceProvider({ children }) {
       id: 'emergency',
       icon: '🛡️',
       name: 'Emergency',
-      amount: formatCurrency(categoryTotals['Emergency'] || 5000),
+      amount: formatCurrency(categoryTotals['Emergency'] || 0),
       subtext: 'Saved this month',
       colorClass: 'tile-red',
     },
@@ -216,7 +353,7 @@ export function FinanceProvider({ children }) {
       id: 'hospital',
       icon: '🏥',
       name: 'Hospital',
-      amount: formatCurrency(categoryTotals['Hospital'] || 2600),
+      amount: formatCurrency(categoryTotals['Hospital'] || 0),
       subtext: 'Spent this month',
       colorClass: 'tile-cyan',
     },
@@ -224,11 +361,77 @@ export function FinanceProvider({ children }) {
       id: 'others',
       icon: '⋯',
       name: 'Others',
-      amount: formatCurrency(categoryTotals['Others'] || categoryTotals['Shopping'] || 1200),
+      amount: formatCurrency((categoryTotals['Others'] || 0) + (categoryTotals['Shopping'] || 0)),
       subtext: 'Spent this month',
       colorClass: 'tile-green',
     },
   ], [categoryTotals]);
+
+  // Derived Budget Usage & Warnings
+  const budgetUsage = useMemo(() => {
+    const usage = {};
+    Object.keys(categoryBudgets).forEach((cat) => {
+      const spent = categoryTotals[cat] || 0;
+      const budget = categoryBudgets[cat] || 0;
+      const percent = budget > 0 ? Math.round((spent / budget) * 100) : 0;
+      usage[cat] = {
+        spent,
+        budget,
+        percent,
+        remaining: Math.max(0, budget - spent),
+        isOver: spent > budget,
+        isNearLimit: percent >= 80 && spent <= budget,
+      };
+    });
+    return usage;
+  }, [categoryTotals, categoryBudgets]);
+
+  // Derived Real-Time AI Insights generated directly from live transactions and budget usage
+  const insights = useMemo(() => {
+    if (!transactions || transactions.length === 0) {
+      return [
+        'No transactions recorded yet. Add your income and expenses to unlock live AI financial coaching.',
+        'Set up monthly budgets for Food, Rent, and Transport to monitor overspending.',
+        'Track daily expenses consistently to boost your Financial Health Score.',
+      ];
+    }
+
+    const list = [];
+
+    // 1. Savings rate insight
+    if (financialSummary.savingsRate >= 20) {
+      list.push(`Strong savings rate of ${financialSummary.savingsRate}% this period. Your savings goal is on track.`);
+    } else if (financialSummary.savingsRate > 0) {
+      list.push(`Current savings rate is ${financialSummary.savingsRate}%. Increasing savings above 20% strengthens cash flow.`);
+    } else if (financialSummary.totalExpenses > 0) {
+      list.push(`Expenses exceed income this period (${formatCurrency(financialSummary.totalExpenses)} spent vs ${formatCurrency(financialSummary.totalIncome)} earned). Consider cutting discretionary spending.`);
+    }
+
+    // 2. Top spending category insight
+    const sortedCategories = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
+    if (sortedCategories.length > 0 && sortedCategories[0][1] > 0) {
+      const [topCategory, topAmount] = sortedCategories[0];
+      const pctOfTotal = financialSummary.totalExpenses > 0
+        ? Math.round((topAmount / financialSummary.totalExpenses) * 100)
+        : 0;
+      list.push(`${topCategory} is your highest spending category at ${formatCurrency(topAmount)} (${pctOfTotal}% of total spend).`);
+    }
+
+    // 3. Budget pacing or warning insight
+    const overBudgetEntry = Object.entries(budgetUsage).find(([, u]) => u.isOver);
+    const nearBudgetEntry = Object.entries(budgetUsage).find(([, u]) => u.isNearLimit);
+    if (overBudgetEntry) {
+      const [cat, u] = overBudgetEntry;
+      list.push(`Budget alert: ${cat} is at ${u.percent}% of budget (exceeded by ${formatCurrency(u.spent - u.budget)}).`);
+    } else if (nearBudgetEntry) {
+      const [cat, u] = nearBudgetEntry;
+      list.push(`Pacing note: ${cat} has reached ${u.percent}% of its monthly budget.`);
+    } else {
+      list.push('All tracked spending categories are currently within your target monthly budgets.');
+    }
+
+    return list.slice(0, 3);
+  }, [transactions, financialSummary, categoryTotals, budgetUsage]);
 
   // Reconciled Bill Reminders derived from transactions
   const billReminders = useMemo(() => {
@@ -249,25 +452,7 @@ export function FinanceProvider({ children }) {
     return initialSubscriptions.filter((sub) => !deletedSubscriptions.has(sub.name));
   }, [deletedSubscriptions]);
 
-  // 6. Action Handlers (All wrapped in useCallback for performance)
-  const addTransaction = useCallback((newTx) => {
-    setTransactions((prev) => {
-      const currentArr = Array.isArray(prev) ? prev : [];
-      const formattedTx = {
-        id: Date.now(),
-        merchant: newTx.merchant || 'Expense',
-        amount: typeof newTx.amount === 'number' ? newTx.amount : -Math.abs(Number(newTx.amount) || 0),
-        category: newTx.category || 'Food',
-        date: newTx.date || new Date().toISOString().split('T')[0],
-      };
-      return [formattedTx, ...currentArr];
-    });
-  }, []);
-
-  const deleteTransaction = useCallback((id) => {
-    setTransactions((prev) => prev.filter((tx) => tx.id !== id));
-  }, []);
-
+  // 8. Other Action Handlers
   const markBillPaid = useCallback((id) => {
     setPaidBills((prev) => new Set([...prev, id]));
   }, []);
@@ -327,18 +512,27 @@ export function FinanceProvider({ children }) {
 
   // Value object provided to all consumers
   const value = useMemo(() => ({
-    // Data & derived metrics
+    // Transactions & mutations
     transactions,
     setTransactions,
     addTransaction,
+    updateTransaction,
     deleteTransaction,
+
+    // Budgets & usage
+    categoryBudgets,
+    setCategoryBudgets,
+    updateCategoryBudget,
+    budgetUsage,
+
+    // Derived financial metrics
     financialSummary,
     categoryTotals,
     spendingCategories,
     billReminders,
     subscriptions,
     investments: initialInvestments,
-    insights: initialInsights,
+    insights,
     markBillPaid,
     removeBill,
     removeSubscription,
@@ -375,12 +569,17 @@ export function FinanceProvider({ children }) {
   }), [
     transactions,
     addTransaction,
+    updateTransaction,
     deleteTransaction,
+    categoryBudgets,
+    updateCategoryBudget,
+    budgetUsage,
     financialSummary,
     categoryTotals,
     spendingCategories,
     billReminders,
     subscriptions,
+    insights,
     markBillPaid,
     removeBill,
     removeSubscription,
@@ -409,7 +608,10 @@ export function FinanceProvider({ children }) {
   );
 }
 
-// Custom hook to consume the Finance Context
+/**
+ * Custom hook to consume the Finance Context.
+ * Throws a clear error if invoked outside of FinanceProvider.
+ */
 export function useFinance() {
   const context = useContext(FinanceContext);
   if (!context) {
@@ -418,6 +620,6 @@ export function useFinance() {
   return context;
 }
 
-// Alias for flexibility
+// Backwards compatibility alias
 export const useAppContext = useFinance;
 export default FinanceContext;

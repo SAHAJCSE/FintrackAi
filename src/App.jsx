@@ -21,6 +21,8 @@ function App() {
     transactions,
     setTransactions,
     addTransaction,
+    updateTransaction,
+    deleteTransaction,
     financialSummary,
     spendingCategories,
     billReminders,
