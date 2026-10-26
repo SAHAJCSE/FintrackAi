@@ -19,6 +19,7 @@ import MoneyRiver from './components/MoneyRiver';
 import Jars from './components/Jars';
 import Split from './components/Split';
 import InstantAddBars from './components/InstantAddBars';
+import Subscriptions from './components/Subscriptions';
 import ShortcutsModal from './components/ShortcutsModal';
 import ShortcutsPage from './components/ShortcutsPage';
 import { formatCurrency } from './utils/finance';
@@ -125,7 +126,7 @@ function App() {
 
       // If not logged in, any internal tab shortcut routes to login
       if (!isLoggedIn) {
-        if (isCombo && (isKey('d') || isKey('s') || isKey('h') || isKey('b') || isKey('a') || isKey('c') || isKey('v') || isKey('m') || isKey('j') || isKey('p') || isKey('i'))) {
+        if (isCombo && (isKey('d') || isKey('s') || isKey('h') || isKey('b') || isKey('a') || isKey('c') || isKey('v') || isKey('m') || isKey('j') || isKey('p') || isKey('u') || isKey('i'))) {
           event.preventDefault();
           navigateTo('login', '/login');
         }
@@ -208,6 +209,14 @@ function App() {
       if (isCombo && isKey('p')) {
         event.preventDefault();
         navigateTo('split', '/split');
+        closeShortcutsModal();
+        return;
+      }
+
+      // Tab: Subscriptions (Ctrl+Alt+U, Alt+U)
+      if (isCombo && isKey('u')) {
+        event.preventDefault();
+        navigateTo('subscriptions', '/subscriptions');
         closeShortcutsModal();
         return;
       }
@@ -360,6 +369,7 @@ function App() {
     onMoneyRiverClick: () => navigateTo('river', '/money-river'),
     onJarsClick: () => navigateTo('jars', '/jars'),
     onSplitClick: () => navigateTo('split', '/split'),
+    onSubscriptionsClick: () => navigateTo('subscriptions', '/subscriptions'),
     onInstantAddClick: () => navigateTo('instant-add', '/instant-add'),
     onVoiceFinanceClick: () => navigateTo('voice', '/voice-finance'),
     onLogout: logout,
@@ -628,6 +638,49 @@ function App() {
     );
   }
 
+  // Dedicated Subscriptions page
+  if (activePage === 'subscriptions') {
+    return (
+      <div className="subscriptions-page-wrapper">
+        {isSidebarOpenMobile && (
+          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
+        )}
+        <Sidebar {...sidebarProps} />
+        <main className="subscriptions-main">
+          <div className="view-header-bar">
+            <button
+              type="button"
+              className="sidebar-toggle-btn"
+              onClick={toggleSidebar}
+              title="Toggle Sidebar Menu"
+            >
+              ☰
+            </button>
+            <button
+              type="button"
+              className="theme-toggle-btn"
+              onClick={toggleTheme}
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+            >
+              {theme === 'dark' ? 'Light Theme' : 'Dark Theme'}
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => navigateTo('dashboard', '/dashboard')}
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+          <Subscriptions
+            onBackToDashboard={() => navigateTo('dashboard', '/dashboard')}
+            onToggleSidebar={toggleSidebar}
+          />
+        </main>
+      </div>
+    );
+  }
+
   // Dedicated Instant Add page
   if (activePage === 'instant-add') {
     return (
@@ -844,13 +897,17 @@ function App() {
                 <BudgetPrediction transactions={transactions} />
               </Panel>
 
-              <Panel title={t('Detected subscriptions')} action={t('Show more')}>
+              <Panel
+                title={t('Detected subscriptions')}
+                action={t('Show more')}
+                onAction={() => navigateTo('subscriptions', '/subscriptions')}
+              >
               <div className="list-container">
                 {subscriptions.map((item) => (
                   <ListRow
-                    key={item.name}
+                    key={item.id || item.name}
                     {...item}
-                    onDelete={() => removeSubscription(item.name)}
+                    onDelete={() => removeSubscription(item.id || item.name)}
                   />
                 ))}
               </div>

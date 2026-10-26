@@ -9,6 +9,7 @@ export const STORAGE_KEY_USERS = 'fintrack_users';
 export const STORAGE_KEY_CURRENT_USER = 'fintrack_current_user';
 export const STORAGE_KEY_JARS = 'fintrack-pro-jars';
 export const STORAGE_KEY_SPLIT = 'fintrack-pro-split';
+export const STORAGE_KEY_SUBSCRIPTIONS = 'fintrack_subscriptions_v2';
 
 export const starterJars = [
   { id: 'jar-emergency', name: 'Emergency fund', emoji: '🛡️', target: 50000, saved: 12500, color: '#34d399' },
@@ -60,12 +61,149 @@ export const initialInsights = [
   'Moving ₹5,000 on payday keeps your savings goal on track.',
 ];
 
-// Subscriptions
-export const initialSubscriptions = [
-  { name: 'JioCinema Premium', note: 'Entertainment · renews 14 Oct', value: '₹149' },
-  { name: 'Cult.fit Gym', note: 'Fitness · renews 02 Oct', value: '₹1,499' },
-  { name: 'Hotstar Super', note: 'Not opened in 40 days', value: '₹299' },
+// Starter Subscriptions with rich metadata
+export const starterSubscriptions = [
+  {
+    id: 'sub-hotstar',
+    name: 'Hotstar Super',
+    category: 'Entertainment',
+    amount: 299,
+    cycle: 'monthly',
+    renewalDate: '2026-10-28',
+    note: 'Entertainment · renews 28 Oct',
+    status: 'unused',
+    lastUsed: '40 days ago',
+    plan: 'Super (with Ads)',
+    paymentMethod: 'Debit Card (SBI)',
+    icon: '⭐',
+    color: '#0c2045',
+  },
+  {
+    id: 'sub-cultfit',
+    name: 'Cult.fit Gym',
+    category: 'Fitness',
+    amount: 1499,
+    cycle: 'monthly',
+    renewalDate: '2026-11-02',
+    note: 'Fitness · renews 02 Nov',
+    status: 'active',
+    lastUsed: 'Yesterday',
+    plan: 'Cult Elite Pass',
+    paymentMethod: 'Credit Card (ICICI)',
+    icon: '🏋️',
+    color: '#ff3278',
+  },
+  {
+    id: 'sub-spotify',
+    name: 'Spotify Premium',
+    category: 'Entertainment',
+    amount: 119,
+    cycle: 'monthly',
+    renewalDate: '2026-11-05',
+    note: 'Individual · ad-free audio',
+    status: 'active',
+    lastUsed: '3 hours ago',
+    plan: 'Individual Premium',
+    paymentMethod: 'Paytm UPI',
+    icon: '🎵',
+    color: '#1db954',
+  },
+  {
+    id: 'sub-googleone',
+    name: 'Google One 100GB',
+    category: 'Utilities',
+    amount: 130,
+    cycle: 'monthly',
+    renewalDate: '2026-11-12',
+    note: 'Cloud storage & photo backup',
+    status: 'active',
+    lastUsed: 'Continuous',
+    plan: 'Basic 100GB',
+    paymentMethod: 'Google Play Balance',
+    icon: '☁️',
+    color: '#4285f4',
+  },
+  {
+    id: 'sub-jiocinema',
+    name: 'JioCinema Premium',
+    category: 'Entertainment',
+    amount: 149,
+    cycle: 'monthly',
+    renewalDate: '2026-11-14',
+    note: 'Entertainment · renews 14 Nov',
+    status: 'active',
+    lastUsed: '2 days ago',
+    plan: 'Standard HD',
+    paymentMethod: 'UPI AutoPay (HDFC)',
+    icon: '🎬',
+    color: '#0066f5',
+  },
+  {
+    id: 'sub-netflix',
+    name: 'Netflix',
+    category: 'Entertainment',
+    amount: 649,
+    cycle: 'monthly',
+    renewalDate: '2026-11-18',
+    note: 'Premium 4K HDR · 4 screens',
+    status: 'active',
+    lastUsed: 'Today',
+    plan: 'Premium Ultra HD',
+    paymentMethod: 'Credit Card (HDFC)',
+    icon: '🍿',
+    color: '#e50914',
+  },
+  {
+    id: 'sub-chatgpt',
+    name: 'ChatGPT Plus',
+    category: 'Productivity',
+    amount: 1999,
+    cycle: 'monthly',
+    renewalDate: '2026-11-22',
+    note: 'OpenAI GPT-4o & Advanced Voice',
+    status: 'active',
+    lastUsed: 'Today',
+    plan: 'Plus Membership',
+    paymentMethod: 'Credit Card (Axis)',
+    icon: '🤖',
+    color: '#10a37f',
+  },
+  {
+    id: 'sub-prime',
+    name: 'Amazon Prime',
+    category: 'Shopping',
+    amount: 1499,
+    cycle: 'yearly',
+    renewalDate: '2026-12-15',
+    note: 'Free 1-day delivery & Prime Video',
+    status: 'active',
+    lastUsed: '2 days ago',
+    plan: 'Annual Prime',
+    paymentMethod: 'Amazon Pay ICICI Card',
+    icon: '📦',
+    color: '#ff9900',
+  },
 ];
+
+// Subscriptions backwards compatible export
+export const initialSubscriptions = starterSubscriptions.map((s) => ({
+  name: s.name,
+  note: s.note,
+  value: `₹${Number(s.amount).toLocaleString('en-IN')}`,
+}));
+
+function getInitialSubscriptions() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_SUBSCRIPTIONS);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+    return starterSubscriptions;
+  } catch {
+    return starterSubscriptions;
+  }
+}
 
 // Bills
 export const initialBills = [
@@ -330,6 +468,34 @@ export function FinanceProvider({ children }) {
   const [paidBills, setPaidBills] = useState(new Set());
   const [deletedBills, setDeletedBills] = useState(new Set());
   const [deletedSubscriptions, setDeletedSubscriptions] = useState(new Set());
+  const [subscriptionsList, setSubscriptionsList] = useState(getInitialSubscriptions);
+
+  // Sync subscriptions with localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_SUBSCRIPTIONS, JSON.stringify(subscriptionsList));
+    } catch (error) {
+      console.error('Failed to save subscriptions to localStorage:', error);
+    }
+  }, [subscriptionsList]);
+
+  // Real-time synchronization across window storage events for subscriptions
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === STORAGE_KEY_SUBSCRIPTIONS && e.newValue) {
+        try {
+          const updated = JSON.parse(e.newValue);
+          if (Array.isArray(updated)) {
+            setSubscriptionsList(updated);
+          }
+        } catch {
+          // ignore
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Sync theme with body class, html data-theme, and localStorage
   useEffect(() => {
@@ -631,8 +797,14 @@ export function FinanceProvider({ children }) {
 
   // Reconciled Subscriptions list
   const subscriptions = useMemo(() => {
-    return initialSubscriptions.filter((sub) => !deletedSubscriptions.has(sub.name));
-  }, [deletedSubscriptions]);
+    return subscriptionsList
+      .filter((sub) => !deletedSubscriptions.has(sub.name) && !deletedSubscriptions.has(sub.id))
+      .map((sub) => ({
+        ...sub,
+        value: sub.value || `₹${Number(sub.amount || 0).toLocaleString('en-IN')}`,
+        note: sub.note || `${sub.category} · renews ${sub.renewalDate || ''}`,
+      }));
+  }, [subscriptionsList, deletedSubscriptions]);
 
   // 8. Other Action Handlers
 
@@ -644,8 +816,71 @@ export function FinanceProvider({ children }) {
     setDeletedBills((prev) => new Set([...prev, id]));
   }, []);
 
-  const removeSubscription = useCallback((name) => {
-    setDeletedSubscriptions((prev) => new Set([...prev, name]));
+  const addSubscription = useCallback((newSub) => {
+    const id = newSub.id || `sub-${Date.now()}`;
+    const subToAdd = {
+      id,
+      name: newSub.name,
+      category: newSub.category || 'Entertainment',
+      amount: Number(newSub.amount) || 0,
+      cycle: newSub.cycle || 'monthly',
+      renewalDate: newSub.renewalDate || new Date().toISOString().slice(0, 10),
+      note: newSub.note || `${newSub.category || 'Subscription'} · renews ${newSub.renewalDate || ''}`,
+      status: newSub.status || 'active',
+      lastUsed: newSub.lastUsed || 'Recent',
+      plan: newSub.plan || 'Standard',
+      paymentMethod: newSub.paymentMethod || 'UPI AutoPay',
+      icon: newSub.icon || '💳',
+      color: newSub.color || '#3b82f6',
+    };
+    setSubscriptionsList((prev) => [subToAdd, ...prev]);
+    return subToAdd;
+  }, []);
+
+  const updateSubscription = useCallback((id, updatedFields) => {
+    setSubscriptionsList((prev) =>
+      prev.map((sub) => (sub.id === id ? { ...sub, ...updatedFields } : sub))
+    );
+  }, []);
+
+  const toggleSubscriptionPause = useCallback((id) => {
+    setSubscriptionsList((prev) =>
+      prev.map((sub) => {
+        if (sub.id === id) {
+          const nextStatus = sub.status === 'paused' ? 'active' : 'paused';
+          return { ...sub, status: nextStatus };
+        }
+        return sub;
+      })
+    );
+  }, []);
+
+  const renewSubscription = useCallback((id) => {
+    setSubscriptionsList((prev) =>
+      prev.map((sub) => {
+        if (sub.id === id) {
+          const current = sub.renewalDate ? new Date(sub.renewalDate) : new Date();
+          if (sub.cycle === 'yearly') {
+            current.setFullYear(current.getFullYear() + 1);
+          } else {
+            current.setMonth(current.getMonth() + 1);
+          }
+          const nextDate = current.toISOString().slice(0, 10);
+          return {
+            ...sub,
+            renewalDate: nextDate,
+            note: `${sub.category} · renews ${new Date(nextDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}`,
+            status: 'active',
+          };
+        }
+        return sub;
+      })
+    );
+  }, []);
+
+  const removeSubscription = useCallback((idOrName) => {
+    setSubscriptionsList((prev) => prev.filter((sub) => sub.id !== idOrName && sub.name !== idOrName));
+    setDeletedSubscriptions((prev) => new Set([...prev, idOrName]));
   }, []);
 
   // Jars Action Handlers (Live synced with transactions & state)
@@ -948,6 +1183,11 @@ export function FinanceProvider({ children }) {
     spendingCategories,
     billReminders,
     subscriptions,
+    subscriptionsList,
+    addSubscription,
+    updateSubscription,
+    toggleSubscriptionPause,
+    renewSubscription,
     investments: initialInvestments,
     insights,
     markBillPaid,
@@ -1020,6 +1260,11 @@ export function FinanceProvider({ children }) {
     spendingCategories,
     billReminders,
     subscriptions,
+    subscriptionsList,
+    addSubscription,
+    updateSubscription,
+    toggleSubscriptionPause,
+    renewSubscription,
     insights,
     markBillPaid,
     removeBill,

@@ -107,6 +107,16 @@ export const SHORTCUTS_DATA = [
         icon: '👥',
       },
       {
+        id: 'subscriptions',
+        name: 'Subscriptions',
+        description: 'Track recurring subscriptions, renewals, costs, and unused services',
+        primary: ['Ctrl', 'Alt', 'U'],
+        alt: ['Alt', 'U'],
+        page: 'subscriptions',
+        path: '/subscriptions',
+        icon: '💳',
+      },
+      {
         id: 'instant-add',
         name: 'Instant Add',
         description: 'Natural language quick transaction adder (type like you talk)',

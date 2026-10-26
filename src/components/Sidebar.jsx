@@ -15,6 +15,7 @@ const navItems = [
   { label: 'Money River', title: 'View your money river flow', page: 'river', icon: 'river', action: 'onMoneyRiverClick' },
   { label: 'Money Jars', title: 'Manage savings goals and jars', page: 'jars', icon: 'jar', action: 'onJarsClick' },
   { label: 'Split Bills', title: 'Track and split shared group expenses', page: 'split', icon: 'split', action: 'onSplitClick' },
+  { label: 'Subscriptions', title: 'Manage all subscriptions & recurring payments', page: 'subscriptions', icon: 'subscription', action: 'onSubscriptionsClick' },
   { label: 'Instant Add', title: 'Instant natural language transaction add', page: 'instant-add', icon: 'zap', action: 'onInstantAddClick' },
 ];
 
@@ -31,6 +32,7 @@ function NavIcon({ name }) {
     river: <><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" /><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" /><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" /></>,
     jar: <><path d="M8 3h8v2H8z" /><path d="M6 7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V7z" /><path d="M9 11h6M9 15h4" /></>,
     split: <><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" /></>,
+    subscription: <><rect x="2" y="5" width="20" height="14" rx="2.5" /><line x1="2" y1="10" x2="22" y2="10" /><path d="M6 15h4" /><circle cx="17" cy="15" r="1.5" /></>,
     zap: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />,
   };
 
@@ -70,6 +72,7 @@ function Sidebar(props) {
   const onMoneyRiverClick = props.onMoneyRiverClick || (() => finance.navigateTo('river', '/money-river'));
   const onJarsClick = props.onJarsClick || (() => finance.navigateTo('jars', '/jars'));
   const onSplitClick = props.onSplitClick || (() => finance.navigateTo('split', '/split'));
+  const onSubscriptionsClick = props.onSubscriptionsClick || (() => finance.navigateTo('subscriptions', '/subscriptions'));
   const onInstantAddClick = props.onInstantAddClick || (() => finance.navigateTo('instant-add', '/instant-add'));
   const onLogout = props.onLogout || finance.logout;
   const t = (text) => translate(text, finance.language);
@@ -91,6 +94,7 @@ function Sidebar(props) {
     onMoneyRiverClick,
     onJarsClick,
     onSplitClick,
+    onSubscriptionsClick,
     onInstantAddClick,
   };
 
@@ -126,6 +130,8 @@ function Sidebar(props) {
             ? ['jars', 'money-jars'].includes(activePage)
             : item.page === 'split'
             ? ['split', 'split-bill', 'split-bills'].includes(activePage)
+            : item.page === 'subscriptions'
+            ? ['subscriptions', 'subscription', 'recurring'].includes(activePage)
             : item.page === 'instant-add'
             ? ['instant-add', 'instant', 'instant-bar'].includes(activePage)
             : activePage === item.page;
