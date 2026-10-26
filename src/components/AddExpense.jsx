@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
+import { translate } from '../utils/i18n';
 
 function AddExpense({ onClose: propOnClose, defaultCategory: propDefaultCategory }) {
   const finance = useFinance();
+  const t = (text) => translate(text, finance.language);
   const handleClose = propOnClose || finance.closeAddExpense;
   const initialCategory = propDefaultCategory || finance.addExpenseDefaultCategory || 'Food';
 
@@ -38,13 +40,9 @@ function AddExpense({ onClose: propOnClose, defaultCategory: propDefaultCategory
       merchant: cleanMerchant,   
       amount: finalAmount,
       category: finalCategory,
-      date: date || new Date().toISOString().split('T')[0],
+      date,
     });
 
-    setMerchant('');
-    setAmount('');
-    setCategory('Food');
-    setDate('');
     handleClose();
   };
 
@@ -52,25 +50,25 @@ function AddExpense({ onClose: propOnClose, defaultCategory: propDefaultCategory
     <div className="expense-modal-backdrop" onClick={handleClose}>
       <div className="expense-modal" onClick={(event) => event.stopPropagation()}>
         <h3 className="expense-modal-title">
-          {transactionType === 'credit' ? 'Add Credit (Income)' : 'Add Debit (Expense)'}
+          {transactionType === 'credit' ? t('Add Credit (Income)') : t('Add Debit (Expense)')}
         </h3>
 
         <form className="expense-form" onSubmit={handleSubmit}>
           {/* Transaction Type Selector */}
           <label className="expense-field">
-            <span>Transaction Type</span>
+            <span>{t('Transaction Type')}</span>
             <select
               value={transactionType}
               onChange={(e) => setTransactionType(e.target.value)}
               style={{ fontWeight: '600' }}
             >
-              <option value="debit">🔴 Money Debited (Expense)</option>
-              <option value="credit">🟢 Money Credited (Income)</option>
+              <option value="debit">{t('Money debited (Expense)')}</option>
+              <option value="credit">{t('Money credited (Income)')}</option>
             </select>
           </label>
 
           <label className="expense-field">
-            <span>{transactionType === 'credit' ? 'Source / Payer' : 'Merchant'}</span>
+            <span>{transactionType === 'credit' ? t('Source / Payer') : t('Merchant')}</span>
             <input
               type="text"
               value={merchant}
@@ -81,7 +79,7 @@ function AddExpense({ onClose: propOnClose, defaultCategory: propDefaultCategory
           </label>
 
           <label className="expense-field">
-            <span>Amount (₹)</span>
+            <span>{t('Amount (₹)')}</span>
             <input
               type="number"
               value={amount}
@@ -95,24 +93,16 @@ function AddExpense({ onClose: propOnClose, defaultCategory: propDefaultCategory
 
           {transactionType === 'debit' && (
             <label className="expense-field">
-              <span>Category</span>
+              <span>{t('Category')}</span>
               <select value={category} onChange={(event) => setCategory(event.target.value)}>
-                <option value="Food">Food</option>
-                <option value="Rent">Rent</option>
-                <option value="Transport">Transport</option>
-                <option value="Shopping">Shopping</option>
-                <option value="Entertainment">Entertainment</option>
-                <option value="Bills">Bills</option>
-                <option value="Health">Health</option>
-                <option value="Groceries">Groceries</option>
-                <option value="Personal">Personal</option>
-                <option value="Emergency">Emergency</option>
+                {['Food', 'Rent', 'Transport', 'Shopping', 'Entertainment', 'Bills', 'Health', 'Groceries', 'Personal', 'Emergency']
+                  .map((item) => <option key={item} value={item}>{t(item)}</option>)}
               </select>
             </label>
           )}
 
           <label className="expense-field">
-            <span>Date</span>
+            <span>{t('Date')}</span>
             <input
               type="date"
               value={date}
@@ -126,7 +116,7 @@ function AddExpense({ onClose: propOnClose, defaultCategory: propDefaultCategory
               Cancel
             </button>
             <button type="submit" className="btn-primary">
-              {transactionType === 'credit' ? 'Add Income' : 'Add Expense'}
+              {transactionType === 'credit' ? t('Add Income') : t('Add Expense')}
             </button>
           </div>
         </form>

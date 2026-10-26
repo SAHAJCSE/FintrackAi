@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import '../login.css';
+import LanguageSelector from './LanguageSelector';
+import { translate } from '../utils/i18n';
 
 function CreateAccount({ onLogin, onBackToLogin, onBackToHome }) {
   const finance = useFinance();
+  const t = (text) => translate(text, finance.language);
   const handleLogin = onLogin || finance.login;
   const handleBackToLogin = onBackToLogin || (() => {
     finance.setIsRegistering(false);
@@ -89,6 +92,18 @@ function CreateAccount({ onLogin, onBackToLogin, onBackToHome }) {
         {/* Right form panel */}
         <main className="login-form-panel">
           <div className="login-card">
+            <div className="auth-controls">
+              <button
+                type="button"
+                className="auth-theme-toggle"
+                onClick={finance.toggleTheme}
+                aria-label={finance.theme === 'dark' ? t('Switch to light mode') : t('Switch to dark mode')}
+                title={finance.theme === 'dark' ? t('Switch to light mode') : t('Switch to dark mode')}
+              >
+                {finance.theme === 'dark' ? t('Light mode') : t('Dark mode')}
+              </button>
+              <LanguageSelector className="auth-language-selector" />
+            </div>
             {handleBackToHome && (
               <button
                 type="button"
@@ -116,7 +131,7 @@ function CreateAccount({ onLogin, onBackToLogin, onBackToHome }) {
             </div>
 
             <div className="login-card-header">
-              <h2 className="login-title">Create an account</h2>
+              <h2 className="login-title">{t('Create an account')}</h2>
               <p className="login-subtitle">
                 Start tracking your finances in seconds
               </p>
@@ -134,7 +149,7 @@ function CreateAccount({ onLogin, onBackToLogin, onBackToHome }) {
 
               {/* Full Name */}
               <div className="form-group">
-                <label htmlFor="create-name" className="form-label">Full name</label>
+                <label htmlFor="create-name" className="form-label">{t('Full name')}</label>
                 <div className="input-wrapper">
                   <input
                     id="create-name"
@@ -149,7 +164,7 @@ function CreateAccount({ onLogin, onBackToLogin, onBackToHome }) {
 
               {/* Email */}
               <div className="form-group">
-                <label htmlFor="create-email" className="form-label">Email address</label>
+                <label htmlFor="create-email" className="form-label">{t('Email address')}</label>
                 <div className="input-wrapper">
                   <input
                     id="create-email"
@@ -164,7 +179,7 @@ function CreateAccount({ onLogin, onBackToLogin, onBackToHome }) {
 
               {/* Password */}
               <div className="form-group">
-                <label htmlFor="create-password" className="form-label">Password</label>
+                <label htmlFor="create-password" className="form-label">{t('Password')}</label>
                 <div className="input-wrapper">
                   <input
                     id="create-password"
@@ -189,18 +204,18 @@ function CreateAccount({ onLogin, onBackToLogin, onBackToHome }) {
                 className={`btn-login ${loading ? 'loading' : ''}`}
                 disabled={loading}
               >
-                {loading ? <><span className="spinner" />Creating account…</> : 'Create account'}
+                {loading ? <><span className="spinner" />{t('Creating account…')}</> : t('Create account')}
               </button>
             </form>
 
             <p className="signup-prompt">
-              Already have an account?{' '}
+              {t('Already have an account?')}{' '}
               <button
                 type="button"
                 className="signup-link"
                 onClick={handleBackToLogin}
               >
-                Sign in
+                {t('Sign in')}
               </button>
             </p>
           </div>

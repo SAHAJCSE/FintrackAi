@@ -72,67 +72,24 @@ export const initialTransactions = [
   { id: 18, merchant: 'Water Bill', amount: -320, category: 'Bills', date: '2026-09-05' },
 ];
 
-/**
- * Safely initialize transactions from localStorage.
- * Distinguishes between "no saved data exists" (returns initial demo transactions)
- * and "user intentionally has zero transactions" (returns []).
- */
-function getInitialTransactions() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY_TRANSACTIONS);
-    // If key does not exist at all, initialize with demo sample transactions
-    if (saved === null) {
-      return initialTransactions;
-    }
-    const parsed = JSON.parse(saved);
-    // If it's a valid array (including intentionally empty []), respect it
-    if (Array.isArray(parsed)) {
-      return parsed;
-    }
-    console.warn('Invalid transaction data format in localStorage. Falling back to default data.');
-    return initialTransactions;
-  } catch (error) {
-    console.warn('Failed to parse transactions from localStorage. Falling back to default data.', error);
-    return initialTransactions;
-  }
-}
-
-/**
- * Safely initialize theme preference from localStorage.
- */
-function getInitialTheme() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY_THEME);
-    return saved === 'light' ? 'light' : 'dark';
-  } catch {
-    return 'dark';
-  }
-}
-
-/**
- * Safely initialize monthly category budgets from localStorage.
- */
-function getInitialBudgets() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY_BUDGETS);
-    if (saved === null) {
-      return initialCategoryBudgets;
-    }
-    const parsed = JSON.parse(saved);
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      return { ...initialCategoryBudgets, ...parsed };
-    }
-    return initialCategoryBudgets;
-  } catch {
-    return initialCategoryBudgets;
-  }
-}
+let latestTransactionId = Date.now();
 
 export const FinanceContext = createContext(null);
 
 export function FinanceProvider({ children }) {
   // 1. Transactions State (Single Source of Truth)
-  const [transactions, setTransactions] = useState(getInitialTransactions);
+  const [transactions, setTransactions] = useState(() => {
+    try {
+      const saved = localStorage.getItem('fintrack_transactions');
+      if (saved !== null) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {
+      // fallback to initial
+    }
+    return initialTransactions;
+  });
 
   // Synchronize transactions with localStorage (handles adds, updates, deletes, and empty arrays)
   useEffect(() => {
@@ -148,15 +105,20 @@ export function FinanceProvider({ children }) {
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY_BUDGETS, JSON.stringify(categoryBudgets));
-    } catch (error) {
-      console.error('Failed to save category budgets to localStorage:', error);
+      const savedTheme = localStorage.getItem('fintrack_theme');
+      return savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'dark';
+    } catch {
+      return 'dark';
     }
-  }, [categoryBudgets]);
-
-  // 3. Authentication State
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isRegistering, setIsRegistering] = useState(false);
+  });
+  const [language, setLanguage] = useState(() => {
+    try {
+      const savedLanguage = localStorage.getItem('fintrack_language');
+      return ['en', 'hi', 'pa'].includes(savedLanguage) ? savedLanguage : 'en';
+    } catch {
+      return 'en';
+    }
+  });
 
   // 4. UI & Theme State
   const [theme, setTheme] = useState(getInitialTheme);
@@ -173,7 +135,8 @@ export function FinanceProvider({ children }) {
 
   // Sync theme with body class, html data-theme, and localStorage
   useEffect(() => {
-    document.body.className = theme === 'light' ? 'theme-light' : 'theme-dark';
+    document.body.classList.toggle('theme-light', theme === 'light');
+    document.body.classList.toggle('theme-dark', theme === 'dark');
     document.documentElement.setAttribute('data-theme', theme);
     try {
       localStorage.setItem(STORAGE_KEY_THEME, theme);
@@ -182,12 +145,23 @@ export function FinanceProvider({ children }) {
     }
   }, [theme]);
 
+  useEffect(() => {
+    document.documentElement.lang = language;
+    try {
+      localStorage.setItem('fintrack_language', language);
+    } catch {
+      // ignore
+    }
+  }, [language]);
+
   // Sync route on popstate and initial URL
   useEffect(() => {
     const syncRouteFromPath = () => {
       const path = window.location.pathname;
       if (path === '/receipt-scanner') {
         setActivePage('scanner');
+      } else if (path === '/voice-finance') {
+        setActivePage('voice');
       } else if (path === '/ai-coach') {
         setActivePage('aicoach');
       } else if (path === '/health') {
@@ -287,7 +261,7 @@ export function FinanceProvider({ children }) {
   const spendingCategories = useMemo(() => [
     {
       id: 'rent',
-      icon: '🏠',
+      icon: 'RE',
       name: 'Rent',
       amount: formatCurrency(categoryTotals['Rent'] || 0),
       subtext: 'Spent this month',
@@ -295,7 +269,7 @@ export function FinanceProvider({ children }) {
     },
     {
       id: 'transport',
-      icon: '🚌',
+      icon: 'TR',
       name: 'Transport',
       amount: formatCurrency(categoryTotals['Transport'] || 0),
       subtext: 'Spent this month',
@@ -303,7 +277,7 @@ export function FinanceProvider({ children }) {
     },
     {
       id: 'food',
-      icon: '🍴',
+      icon: 'FD',
       name: 'Food & Groceries',
       amount: formatCurrency(categoryTotals['Food'] || 0),
       subtext: 'Spent this month',
@@ -311,7 +285,7 @@ export function FinanceProvider({ children }) {
     },
     {
       id: 'health',
-      icon: '❤️',
+      icon: 'HL',
       name: 'Health',
       amount: formatCurrency(categoryTotals['Health'] || 0),
       subtext: 'Spent this month',
@@ -319,7 +293,7 @@ export function FinanceProvider({ children }) {
     },
     {
       id: 'personal',
-      icon: '👤',
+      icon: 'PE',
       name: 'Personal',
       amount: formatCurrency(categoryTotals['Personal'] || 0),
       subtext: 'Spent this month',
@@ -327,7 +301,7 @@ export function FinanceProvider({ children }) {
     },
     {
       id: 'entertainment',
-      icon: '🎮',
+      icon: 'EN',
       name: 'Entertainment',
       amount: formatCurrency(categoryTotals['Entertainment'] || 0),
       subtext: 'Spent this month',
@@ -335,7 +309,7 @@ export function FinanceProvider({ children }) {
     },
     {
       id: 'utilities',
-      icon: '⚡',
+      icon: 'UT',
       name: 'Utilities',
       amount: formatCurrency(categoryTotals['Utilities'] || 0),
       subtext: 'Spent this month',
@@ -343,7 +317,7 @@ export function FinanceProvider({ children }) {
     },
     {
       id: 'emergency',
-      icon: '🛡️',
+      icon: 'EM',
       name: 'Emergency',
       amount: formatCurrency(categoryTotals['Emergency'] || 0),
       subtext: 'Saved this month',
@@ -351,7 +325,7 @@ export function FinanceProvider({ children }) {
     },
     {
       id: 'hospital',
-      icon: '🏥',
+      icon: 'HO',
       name: 'Hospital',
       amount: formatCurrency(categoryTotals['Hospital'] || 0),
       subtext: 'Spent this month',
@@ -452,7 +426,40 @@ export function FinanceProvider({ children }) {
     return initialSubscriptions.filter((sub) => !deletedSubscriptions.has(sub.name));
   }, [deletedSubscriptions]);
 
-  // 8. Other Action Handlers
+  // 6. Action Handlers (All wrapped in useCallback for performance)
+  const addTransaction = useCallback((newTx) => {
+    if (!newTx || typeof newTx !== 'object') {
+      throw new TypeError('A transaction must be provided.');
+    }
+
+    const amount = Number(newTx.amount);
+    if (!Number.isFinite(amount) || amount === 0) {
+      throw new TypeError('A transaction must have a valid non-zero amount.');
+    }
+
+    const transactionDate = typeof newTx.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(newTx.date)
+      ? newTx.date
+      : new Date().toISOString().split('T')[0];
+    const id = Math.max(Date.now(), latestTransactionId + 1);
+    latestTransactionId = id;
+
+    setTransactions((prev) => {
+      const currentArr = Array.isArray(prev) ? prev : [];
+      const formattedTx = {
+        id,
+        merchant: String(newTx.merchant || 'Expense').trim(),
+        amount,
+        category: String(newTx.category || 'Food').trim(),
+        date: transactionDate,
+      };
+      return [formattedTx, ...currentArr];
+    });
+  }, []);
+
+  const deleteTransaction = useCallback((id) => {
+    setTransactions((prev) => prev.filter((tx) => tx.id !== id));
+  }, []);
+
   const markBillPaid = useCallback((id) => {
     setPaidBills((prev) => new Set([...prev, id]));
   }, []);
@@ -549,6 +556,8 @@ export function FinanceProvider({ children }) {
     theme,
     setTheme,
     toggleTheme,
+    language,
+    setLanguage,
 
     // Navigation & UI state & actions
     activePage,
@@ -589,6 +598,8 @@ export function FinanceProvider({ children }) {
     logout,
     theme,
     toggleTheme,
+    language,
+    setLanguage,
     activePage,
     navigateTo,
     isSidebarVisible,
