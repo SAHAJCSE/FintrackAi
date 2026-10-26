@@ -18,6 +18,7 @@ import VoiceFinancePage from './components/VoiceFinancePage';
 import MoneyRiver from './components/MoneyRiver';
 import Jars from './components/Jars';
 import Split from './components/Split';
+import InstantAddBars from './components/InstantAddBars';
 import ShortcutsModal from './components/ShortcutsModal';
 import ShortcutsPage from './components/ShortcutsPage';
 import { formatCurrency } from './utils/finance';
@@ -124,7 +125,7 @@ function App() {
 
       // If not logged in, any internal tab shortcut routes to login
       if (!isLoggedIn) {
-        if (isCombo && (isKey('d') || isKey('s') || isKey('h') || isKey('b') || isKey('a') || isKey('c') || isKey('v') || isKey('m') || isKey('j') || isKey('p'))) {
+        if (isCombo && (isKey('d') || isKey('s') || isKey('h') || isKey('b') || isKey('a') || isKey('c') || isKey('v') || isKey('m') || isKey('j') || isKey('p') || isKey('i'))) {
           event.preventDefault();
           navigateTo('login', '/login');
         }
@@ -207,6 +208,14 @@ function App() {
       if (isCombo && isKey('p')) {
         event.preventDefault();
         navigateTo('split', '/split');
+        closeShortcutsModal();
+        return;
+      }
+
+      // Tab: Instant Add (Ctrl+Alt+I, Alt+I)
+      if (isCombo && isKey('i')) {
+        event.preventDefault();
+        navigateTo('instant-add', '/instant-add');
         closeShortcutsModal();
         return;
       }
@@ -351,6 +360,7 @@ function App() {
     onMoneyRiverClick: () => navigateTo('river', '/money-river'),
     onJarsClick: () => navigateTo('jars', '/jars'),
     onSplitClick: () => navigateTo('split', '/split'),
+    onInstantAddClick: () => navigateTo('instant-add', '/instant-add'),
     onVoiceFinanceClick: () => navigateTo('voice', '/voice-finance'),
     onLogout: logout,
   };
@@ -618,6 +628,60 @@ function App() {
     );
   }
 
+  // Dedicated Instant Add page
+  if (activePage === 'instant-add') {
+    return (
+      <div className="instant-add-page-wrapper">
+        {isSidebarOpenMobile && (
+          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
+        )}
+        <Sidebar {...sidebarProps} />
+        <main className="instant-add-main">
+          <div className="view-header-bar">
+            <button
+              type="button"
+              className="sidebar-toggle-btn"
+              onClick={toggleSidebar}
+              title="Toggle Sidebar Menu"
+            >
+              ☰
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => navigateTo('dashboard', '/dashboard')}
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+
+          <div className="instant-add-view-content">
+            <div className="instant-add-hero-header">
+              <div className="instant-hero-badge">⚡ Instant Natural Language Add</div>
+              <h1 className="instant-hero-title">Type Like You Talk</h1>
+              <p className="instant-hero-desc">
+                Add income or expense transactions in seconds with smart auto-detection of amounts, dates, and categories.
+              </p>
+            </div>
+
+            <div className="instant-add-card">
+              <InstantAddBars onAddTransaction={addTransaction} />
+            </div>
+
+            <div className="instant-recent-section">
+              <LatestTransactions
+                transactions={transactions}
+                onDeleteTransaction={deleteTransaction}
+                onEditTransaction={updateTransaction}
+                onAddTransaction={openAddExpense}
+              />
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   // Dedicated Shortcuts Directory page
   if (activePage === 'shortcuts') {
     return (
@@ -699,11 +763,25 @@ function App() {
               {t('Receipt Scanner')}
               <kbd>Ctrl+Alt+S</kbd>
             </button>
+            <button
+              type="button"
+              className="btn-secondary instant-add-header-btn"
+              onClick={() => navigateTo('instant-add', '/instant-add')}
+              title="Quick natural language transaction add (Ctrl+Alt+I)"
+            >
+              ⚡ {t('Instant Add')}
+              <kbd>Ctrl+Alt+I</kbd>
+            </button>
             <button type="button" className="btn-primary" onClick={() => openAddExpense('Food')}>
               {t('+ Add Transaction')}
             </button>
           </div>
         </header>
+
+        {/* Dashboard Instant Add NLP Bar */}
+        <div className="dashboard-instant-add-banner">
+          <InstantAddBars onAddTransaction={addTransaction} />
+        </div>
 
         {/* Dashboard Grid */}
         <div className="dashboard-grid">

@@ -132,6 +132,15 @@ function HomePage(props) {
           >
             {t('Split Bills')}
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (!finance.isLoggedIn) finance.navigateTo('login', '/login');
+              else finance.navigateTo('instant-add', '/instant-add');
+            }}
+          >
+            ⚡ {t('Instant Add')}
+          </button>
         </nav>
         <div className="landing-nav-actions">
           <LanguageSelector className="home-language-selector" />

@@ -107,6 +107,16 @@ export const SHORTCUTS_DATA = [
         icon: '👥',
       },
       {
+        id: 'instant-add',
+        name: 'Instant Add',
+        description: 'Natural language quick transaction adder (type like you talk)',
+        primary: ['Ctrl', 'Alt', 'I'],
+        alt: ['Alt', 'I'],
+        page: 'instant-add',
+        path: '/instant-add',
+        icon: '⚡',
+      },
+      {
         id: 'home',
         name: 'Home / Landing',
         description: 'FinTrack AI welcome page and feature highlights',
