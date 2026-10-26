@@ -12,6 +12,10 @@ const navItems = [
   { label: 'Scanner', title: 'Open receipt scanner', page: 'scanner', icon: 'receipt', action: 'onReceiptScannerClick' },
   { label: 'Voice Finance', title: 'Voice finance management coming soon', page: 'voice', icon: 'microphone', action: 'onVoiceFinanceClick' },
   { label: 'Activity Calendar', title: 'View activity calendar', page: 'nospend', icon: 'calendar', action: 'onNoSpendClick' },
+  { label: 'Money River', title: 'View your money river flow', page: 'river', icon: 'river', action: 'onMoneyRiverClick' },
+  { label: 'Money Jars', title: 'Manage savings goals and jars', page: 'jars', icon: 'jar', action: 'onJarsClick' },
+  { label: 'Split Bills', title: 'Track and split shared group expenses', page: 'split', icon: 'split', action: 'onSplitClick' },
+  { label: 'Instant Add', title: 'Instant natural language transaction add', page: 'instant-add', icon: 'zap', action: 'onInstantAddClick' },
 ];
 
 function NavIcon({ name }) {
@@ -24,6 +28,10 @@ function NavIcon({ name }) {
     receipt: <><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z" /><path d="M9 8h6M9 12h6M9 16h3" /></>,
     microphone: <><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8" /></>,
     calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 10h18" /><path d="m8 15 2 2 5-5" /></>,
+    river: <><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" /><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" /><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" /></>,
+    jar: <><path d="M8 3h8v2H8z" /><path d="M6 7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V7z" /><path d="M9 11h6M9 15h4" /></>,
+    split: <><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" /></>,
+    zap: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />,
   };
 
   return (
@@ -59,6 +67,10 @@ function Sidebar(props) {
   const onAiCoachClick = props.onAiCoachClick || (() => finance.navigateTo('aicoach', '/ai-coach'));
   const onReceiptScannerClick = props.onReceiptScannerClick || (() => finance.navigateTo('scanner', '/receipt-scanner'));
   const onNoSpendClick = props.onNoSpendClick || (() => finance.navigateTo('nospend', '/no-spend'));
+  const onMoneyRiverClick = props.onMoneyRiverClick || (() => finance.navigateTo('river', '/money-river'));
+  const onJarsClick = props.onJarsClick || (() => finance.navigateTo('jars', '/jars'));
+  const onSplitClick = props.onSplitClick || (() => finance.navigateTo('split', '/split'));
+  const onInstantAddClick = props.onInstantAddClick || (() => finance.navigateTo('instant-add', '/instant-add'));
   const onLogout = props.onLogout || finance.logout;
   const t = (text) => translate(text, finance.language);
 
@@ -76,6 +88,10 @@ function Sidebar(props) {
     onReceiptScannerClick,
     onVoiceFinanceClick: props.onVoiceFinanceClick || (() => finance.navigateTo('voice', '/voice-finance')),
     onNoSpendClick,
+    onMoneyRiverClick,
+    onJarsClick,
+    onSplitClick,
+    onInstantAddClick,
   };
 
   return (
@@ -104,6 +120,14 @@ function Sidebar(props) {
         {navItems.map((item) => {
           const isActive = item.page === 'nospend'
             ? ['nospend', 'no-spend', 'calendar'].includes(activePage)
+            : item.page === 'river'
+            ? ['river', 'money-river'].includes(activePage)
+            : item.page === 'jars'
+            ? ['jars', 'money-jars'].includes(activePage)
+            : item.page === 'split'
+            ? ['split', 'split-bill', 'split-bills'].includes(activePage)
+            : item.page === 'instant-add'
+            ? ['instant-add', 'instant', 'instant-bar'].includes(activePage)
             : activePage === item.page;
 
           return (

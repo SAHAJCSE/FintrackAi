@@ -15,6 +15,10 @@ import ReceiptScanner from './components/ReceiptScanner';
 import SpendingCard from './components/SpendingCard';
 import NoSpendHeatmap from './components/NoSpendHeatmap';
 import VoiceFinancePage from './components/VoiceFinancePage';
+import MoneyRiver from './components/MoneyRiver';
+import Jars from './components/Jars';
+import Split from './components/Split';
+import InstantAddBars from './components/InstantAddBars';
 import ShortcutsModal from './components/ShortcutsModal';
 import ShortcutsPage from './components/ShortcutsPage';
 import { formatCurrency } from './utils/finance';
@@ -121,7 +125,7 @@ function App() {
 
       // If not logged in, any internal tab shortcut routes to login
       if (!isLoggedIn) {
-        if (isCombo && (isKey('d') || isKey('s') || isKey('h') || isKey('b') || isKey('a') || isKey('c') || isKey('v'))) {
+        if (isCombo && (isKey('d') || isKey('s') || isKey('h') || isKey('b') || isKey('a') || isKey('c') || isKey('v') || isKey('m') || isKey('j') || isKey('p') || isKey('i'))) {
           event.preventDefault();
           navigateTo('login', '/login');
         }
@@ -184,8 +188,40 @@ function App() {
         return;
       }
 
-      // Tab 8: Shortcuts Directory (Ctrl+Alt+K, Alt+8)
-      if ((isCombo && isKey('k')) || (isAlt && (key === '8' || code === 'Digit8'))) {
+      // Tab 8: Money River (Ctrl+Alt+M, Alt+M, Alt+8)
+      if ((isCombo && isKey('m')) || (isAlt && (key === '8' || code === 'Digit8'))) {
+        event.preventDefault();
+        navigateTo('river', '/money-river');
+        closeShortcutsModal();
+        return;
+      }
+
+      // Tab: Money Jars (Ctrl+Alt+J, Alt+J)
+      if (isCombo && isKey('j')) {
+        event.preventDefault();
+        navigateTo('jars', '/jars');
+        closeShortcutsModal();
+        return;
+      }
+
+      // Tab: Split Bills (Ctrl+Alt+P, Alt+P)
+      if (isCombo && isKey('p')) {
+        event.preventDefault();
+        navigateTo('split', '/split');
+        closeShortcutsModal();
+        return;
+      }
+
+      // Tab: Instant Add (Ctrl+Alt+I, Alt+I)
+      if (isCombo && isKey('i')) {
+        event.preventDefault();
+        navigateTo('instant-add', '/instant-add');
+        closeShortcutsModal();
+        return;
+      }
+
+      // Tab 9: Shortcuts Directory (Ctrl+Alt+K, Alt+9)
+      if ((isCombo && isKey('k')) || (isAlt && (key === '9' || code === 'Digit9'))) {
         event.preventDefault();
         navigateTo('shortcuts', '/shortcuts');
         closeShortcutsModal();
@@ -321,6 +357,10 @@ function App() {
     onAiCoachClick: () => navigateTo('aicoach', '/ai-coach'),
     onReceiptScannerClick: () => navigateTo('scanner', '/receipt-scanner'),
     onNoSpendClick: () => navigateTo('nospend', '/no-spend'),
+    onMoneyRiverClick: () => navigateTo('river', '/money-river'),
+    onJarsClick: () => navigateTo('jars', '/jars'),
+    onSplitClick: () => navigateTo('split', '/split'),
+    onInstantAddClick: () => navigateTo('instant-add', '/instant-add'),
     onVoiceFinanceClick: () => navigateTo('voice', '/voice-finance'),
     onLogout: logout,
   };
@@ -492,6 +532,164 @@ function App() {
     );
   }
 
+  // Dedicated Money River (Sankey Flow) page
+  if (activePage === 'river') {
+    return (
+      <div className="money-river-page-wrapper">
+        {isSidebarOpenMobile && (
+          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
+        )}
+        <Sidebar {...sidebarProps} />
+        <main className="money-river-main">
+          <div className="view-header-bar">
+            <button
+              type="button"
+              className="sidebar-toggle-btn"
+              onClick={toggleSidebar}
+              title="Toggle Sidebar Menu"
+            >
+              ☰
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => navigateTo('dashboard', '/dashboard')}
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+          <MoneyRiver transactions={transactions} />
+        </main>
+      </div>
+    );
+  }
+
+  // Dedicated Money Jars (Savings Goals) page
+  if (activePage === 'jars') {
+    return (
+      <div className="jars-page-wrapper">
+        {isSidebarOpenMobile && (
+          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
+        )}
+        <Sidebar {...sidebarProps} />
+        <main className="jars-main">
+          <div className="view-header-bar">
+            <button
+              type="button"
+              className="sidebar-toggle-btn"
+              onClick={toggleSidebar}
+              title="Toggle Sidebar Menu"
+            >
+              ☰
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => navigateTo('dashboard', '/dashboard')}
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+          <Jars />
+        </main>
+      </div>
+    );
+  }
+
+  // Dedicated Split (Shared Bills) page
+  if (activePage === 'split') {
+    return (
+      <div className="split-page-wrapper">
+        {isSidebarOpenMobile && (
+          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
+        )}
+        <Sidebar {...sidebarProps} />
+        <main className="split-main">
+          <div className="view-header-bar">
+            <button
+              type="button"
+              className="sidebar-toggle-btn"
+              onClick={toggleSidebar}
+              title="Toggle Sidebar Menu"
+            >
+              ☰
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => navigateTo('dashboard', '/dashboard')}
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+          <Split />
+        </main>
+      </div>
+    );
+  }
+
+  // Dedicated Instant Add page
+  if (activePage === 'instant-add') {
+    return (
+      <div className="instant-add-page-wrapper">
+        {isSidebarOpenMobile && (
+          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
+        )}
+        <Sidebar {...sidebarProps} />
+        <main className="instant-add-main">
+          <div className="view-header-bar">
+            <button
+              type="button"
+              className="sidebar-toggle-btn"
+              onClick={toggleSidebar}
+              title="Toggle Sidebar Menu"
+            >
+              ☰
+            </button>
+            <button
+              type="button"
+              className="theme-toggle-btn"
+              onClick={toggleTheme}
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+            >
+              {theme === 'dark' ? 'Light Theme' : 'Dark Theme'}
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => navigateTo('dashboard', '/dashboard')}
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+
+          <div className="instant-add-view-content">
+            <div className="instant-add-hero-header">
+              <div className="instant-hero-badge">⚡ Instant Natural Language Add</div>
+              <h1 className="instant-hero-title">Type Like You Talk</h1>
+              <p className="instant-hero-desc">
+                Add income or expense transactions in seconds with smart auto-detection of amounts, dates, and categories.
+              </p>
+            </div>
+
+            <div className="instant-add-card">
+              <InstantAddBars onAddTransaction={addTransaction} />
+            </div>
+
+            <div className="instant-recent-section">
+              <LatestTransactions
+                transactions={transactions}
+                onDeleteTransaction={deleteTransaction}
+                onEditTransaction={updateTransaction}
+                onAddTransaction={openAddExpense}
+              />
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   // Dedicated Shortcuts Directory page
   if (activePage === 'shortcuts') {
     return (
@@ -563,21 +761,16 @@ function App() {
             >
               ⌨️ {t('Shortcuts')}
             </button>
-            <button
-              type="button"
-              className="btn-secondary scanner-shortcut"
-              onClick={() => navigateTo('scanner', '/receipt-scanner')}
-              aria-keyshortcuts="Control+Alt+S Meta+Alt+S"
-              title={t('Open the receipt scanner with Ctrl+Alt+S.')}
-            >
-              {t('Receipt Scanner')}
-              <kbd>Ctrl+Alt+S</kbd>
-            </button>
             <button type="button" className="btn-primary" onClick={() => openAddExpense('Food')}>
               {t('+ Add Transaction')}
             </button>
           </div>
         </header>
+
+        {/* Dashboard Instant Add NLP Bar */}
+        <div className="dashboard-instant-add-banner">
+          <InstantAddBars onAddTransaction={addTransaction} />
+        </div>
 
         {/* Dashboard Grid */}
         <div className="dashboard-grid">
