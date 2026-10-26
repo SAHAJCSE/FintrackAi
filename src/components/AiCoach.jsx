@@ -7,10 +7,13 @@ function AiCoach({ transactions: propTransactions }) {
   const finance = useFinance();
   const t = (text) => translate(text, finance.language);
   const transactions = propTransactions || finance.transactions || [];
+  const financialSummary = finance.financialSummary;
+  const budgetUsage = finance.budgetUsage || {};
+
   const [messages, setMessages] = useState([
     {
       role: 'coach',
-      text: translate('Ask questions about your finances.', finance.language),
+      text: 'Ask questions about your finances, budget pacing, or savings tips.',
     },
   ]);
 
@@ -24,20 +27,73 @@ function AiCoach({ transactions: propTransactions }) {
 
   const suggestions = [
     'How much did I spend on food?',
-    'How much did I spend this month?',
-    'What are my subscriptions?',
+    'What is my financial health score?',
+    'How is my budget pacing?',
     'Where am I overspending?',
+    'How can I improve my savings?',
+    'What are my subscriptions?',
   ];
 
   function getCoachAnswer(question) {
     const q = question.toLowerCase();
 
-    // Question 1: Food & Groceries spending
-    if (['food', 'groc', 'din', 'भोजन', 'खाना', 'किराना', 'ਭੋਜਨ', 'ਖਾਣਾ', 'ਕਰਿਆਨਾ'].some((word) => q.includes(word))) {
+    // Guard against empty transactions
+    if (!transactions || transactions.length === 0) {
+      if (q.includes('tip') || q.includes('save') || q.includes('advice')) {
+        return 'Rule of thumb: Follow the 50/30/20 rule (50% needs, 30% wants, 20% savings). Log your income and first few expenses to start getting tailored insights!';
+      }
+      return 'You currently have zero logged transactions. Start by clicking "+ Add Transaction" or scanning a receipt to see live metrics and coaching!';
+    }
+
+    // Health Score
+    if (q.includes('health') || q.includes('score')) {
+      const score = financialSummary?.healthScore ?? 50;
+      let status = 'Moderate';
+      let tip = 'Try to keep discretionary expenses under 70% of income.';
+      if (score >= 75) {
+        status = 'Strong';
+        tip = 'Your savings rate and cash buffer are in good shape. Maintain this pace!';
+      } else if (score < 50) {
+        status = 'Needs Attention';
+        tip = 'Your expenses are high relative to income. Focus on eliminating unneeded subscriptions.';
+      }
+      return `Your Financial Health Score is ${score}/100 (${status}). ${tip}`;
+    }
+
+    // Budget Pacing & Warnings
+    if (q.includes('budget') || q.includes('limit') || q.includes('pacing')) {
+      const overEntries = Object.entries(budgetUsage).filter(([, u]) => u.isOver);
+      const nearEntries = Object.entries(budgetUsage).filter(([, u]) => u.isNearLimit);
+
+      if (overEntries.length > 0) {
+        const list = overEntries.map(([c, u]) => `${c} (${u.percent}%, over by ${formatCurrency(u.spent - u.budget)})`).join(', ');
+        return `⚠️ Budget Alert: You have exceeded budget in: ${list}. Consider pausing non-essential purchases in these areas.`;
+      }
+      if (nearEntries.length > 0) {
+        const list = nearEntries.map(([c, u]) => `${c} (${u.percent}%)`).join(', ');
+        return `Notice: You are approaching budget limits in: ${list}. Keep an eye on daily spending here.`;
+      }
+      return `Good news! All categories are currently within their monthly budget limits. Total spending is ${formatCurrency(financialSummary?.totalExpenses || 0)}.`;
+    }
+
+    // Savings & Tips
+    if (q.includes('save') || q.includes('saving') || q.includes('improve') || q.includes('tip')) {
+      const rate = financialSummary?.savingsRate ?? 0;
+      if (rate >= 20) {
+        return `You are saving ${rate}% of your income, surpassing the recommended 20% benchmark! Consider investing surplus funds into an index fund or recurring deposit.`;
+      }
+      if (rate > 0) {
+        return `Your current savings rate is ${rate}%. To reach the 20% benchmark, try cutting small recurring conveniences (dining delivery or unused subscriptions) to save an extra ₹1,500 - ₹2,500 this month.`;
+      }
+      return `Your expenses currently match or exceed your income. Tip 1: Prioritize essential bills first. Tip 2: Track every small purchase for 7 days. Tip 3: Aim for 1-2 No-Spend days per week.`;
+    }
+
+    // Food & Groceries
+    if (q.includes('food') || q.includes('groc') || q.includes('din')) {
       let total = 0;
       for (let i = 0; i < transactions.length; i += 1) {
         const cat = normalizeCategory(transactions[i].category);
-        if (cat === 'Food') {
+        if (cat === 'Food' || cat === 'Groceries') {
           total += Math.abs(transactions[i].amount);
         }
       }

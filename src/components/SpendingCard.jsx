@@ -4,7 +4,6 @@ function SpendingCard({
   icon,
   name,
   amount,
-  subtext = 'Spent this month',
   colorClass,
 }) {
   return (
@@ -18,7 +17,6 @@ function SpendingCard({
       <div className="card-body">
         <h3 className="card-title">{name}</h3>
         <p className="card-amount">{amount}</p>
-        <p className="card-subtext">{subtext}</p>
       </div>
     </div>
   );

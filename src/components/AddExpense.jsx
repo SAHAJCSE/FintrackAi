@@ -113,7 +113,7 @@ function AddExpense({ onClose: propOnClose, defaultCategory: propDefaultCategory
 
           <div className="expense-form-actions">
             <button type="button" className="btn-secondary" onClick={handleClose}>
-              {t('Cancel')}
+              Cancel
             </button>
             <button type="submit" className="btn-primary">
               {transactionType === 'credit' ? t('Add Income') : t('Add Expense')}
