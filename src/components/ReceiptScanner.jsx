@@ -9,7 +9,7 @@ const initialRecentScans = [
     amount: '₹450',
     category: 'Food & Dining',
     date: '12 Sep 2026',
-    thumbnail: '☕',
+    thumbnail: 'FD',
   },
   {
     id: 'scan-2',
@@ -17,7 +17,7 @@ const initialRecentScans = [
     amount: '₹1,299',
     category: 'Shopping',
     date: '10 Sep 2026',
-    thumbnail: '📦',
+    thumbnail: 'SH',
   },
   {
     id: 'scan-3',
@@ -25,7 +25,7 @@ const initialRecentScans = [
     amount: '₹320',
     category: 'Transportation',
     date: '08 Sep 2026',
-    thumbnail: '🚗',
+    thumbnail: 'TR',
   },
   {
     id: 'scan-4',
@@ -33,7 +33,7 @@ const initialRecentScans = [
     amount: '₹620',
     category: 'Food & Dining',
     date: '05 Sep 2026',
-    thumbnail: '🍕',
+    thumbnail: 'FD',
   },
 ];
 
@@ -175,15 +175,15 @@ function ReceiptScanner({ onBackToDashboard, onAddExpense, onToggleSidebar }) {
   };
 
   const getThumbnail = (cat) => {
-    if (!cat) return '🧾';
-    if (cat.includes('Food')) return '☕';
-    if (cat.includes('Shopping')) return '📦';
-    if (cat.includes('Transport')) return '🚗';
-    if (cat.includes('Bills')) return '⚡';
-    if (cat.includes('Groceries')) return '🛒';
-    if (cat.includes('Health')) return '💊';
-    if (cat.includes('Entertainment')) return '🎬';
-    return '🧾';
+    if (!cat) return 'RC';
+    if (cat.includes('Food')) return 'FD';
+    if (cat.includes('Shopping')) return 'SH';
+    if (cat.includes('Transport')) return 'TR';
+    if (cat.includes('Bills')) return 'BL';
+    if (cat.includes('Groceries')) return 'GR';
+    if (cat.includes('Health')) return 'HL';
+    if (cat.includes('Entertainment')) return 'EN';
+    return 'RC';
   };
 
   const formatTransactionDate = (dateStr) => {
@@ -293,9 +293,9 @@ function ReceiptScanner({ onBackToDashboard, onAddExpense, onToggleSidebar }) {
 
       {/* Page Header */}
       <header className="scanner-header">
-        <h1 className="scanner-title">Receipt Scanner</h1>
+        <h1 className="scanner-title">Receipt Upload Demo</h1>
         <p className="scanner-subtitle">
-          Scan your receipts and automatically extract expense details.
+          Upload a receipt image to preview it, then enter or review example expense details manually.
         </p>
       </header>
 
@@ -337,9 +337,9 @@ function ReceiptScanner({ onBackToDashboard, onAddExpense, onToggleSidebar }) {
               </svg>
             </div>
 
-            <h2 className="upload-heading">Upload your receipt</h2>
+            <h2 className="upload-heading">Upload a receipt image</h2>
             <p className="upload-description">
-              Upload an image of your receipt to extract expense details.
+              This demo does not read receipt text. You can preview an image and edit sample transaction details.
             </p>
 
             <div className="upload-actions" onClick={(e) => e.stopPropagation()}>
@@ -361,7 +361,7 @@ function ReceiptScanner({ onBackToDashboard, onAddExpense, onToggleSidebar }) {
                   <polyline points="17 8 12 3 7 8" />
                   <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
-                Upload Receipt
+                Choose Receipt Image
               </button>
             </div>
 
@@ -372,7 +372,7 @@ function ReceiptScanner({ onBackToDashboard, onAddExpense, onToggleSidebar }) {
           <div className="preview-and-scan-wrapper">
             <div className="preview-card-header">
               <div className="file-info-badge">
-                <span className="file-icon">📄</span>
+                <span className="file-icon" aria-hidden="true">FILE</span>
                 <div className="file-details">
                   <span className="file-name">{selectedFile.name}</span>
                   <span className="file-size">{formatFileSize(selectedFile.size)}</span>
@@ -399,8 +399,7 @@ function ReceiptScanner({ onBackToDashboard, onAddExpense, onToggleSidebar }) {
                 />
               ) : (
                 <div className="receipt-placeholder">
-                  <span>🧾</span>
-                  <p>Receipt Image Selected</p>
+                  <p>Receipt image selected</p>
                 </div>
               )}
 
@@ -409,7 +408,7 @@ function ReceiptScanner({ onBackToDashboard, onAddExpense, onToggleSidebar }) {
                 <div className="scanning-overlay">
                   <div className="scan-line"></div>
                   <div className="scanning-spinner"></div>
-                  <p className="scanning-text">Scanning receipt...</p>
+                  <p className="scanning-text">Preparing example details...</p>
                 </div>
               )}
             </div>
@@ -437,7 +436,7 @@ function ReceiptScanner({ onBackToDashboard, onAddExpense, onToggleSidebar }) {
                     <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
                     <rect x="7" y="7" width="10" height="10" rx="1" />
                   </svg>
-                  Scan Receipt
+                  Show Example Details
                 </button>
               </div>
             )}
@@ -449,8 +448,8 @@ function ReceiptScanner({ onBackToDashboard, onAddExpense, onToggleSidebar }) {
       {hasScanned && (
         <div className="extracted-details-section">
           <div className="section-header">
-            <h2 className="section-title">Extracted Details</h2>
-            <span className="extracted-tag font-medium">Auto-filled • Editable</span>
+            <h2 className="section-title">Example Details</h2>
+            <span className="extracted-tag font-medium">Demo values · Editable</span>
           </div>
 
           <form className="extracted-form" onSubmit={handleSaveExpense}>
@@ -540,9 +539,9 @@ function ReceiptScanner({ onBackToDashboard, onAddExpense, onToggleSidebar }) {
         </div>
       )}
 
-      {/* Step 5: Recent Scans Section */}
+      {/* Demo history */}
       <div className="recent-scans-section">
-        <h2 className="section-title">Recent Scans</h2>
+        <h2 className="section-title">Sample Receipt Entries</h2>
         <div className="recent-scans-list">
           {recentScans.map((scan) => (
             <div key={scan.id} className="recent-scan-card">

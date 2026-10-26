@@ -1,18 +1,26 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { normalizeCategory, formatCurrency } from '../utils/finance';
 import { useFinance } from '../context/FinanceContext';
+import { translate } from '../utils/i18n';
 
 function AiCoach({ transactions: propTransactions }) {
   const finance = useFinance();
+  const t = (text) => translate(text, finance.language);
   const transactions = propTransactions || finance.transactions || [];
   const [messages, setMessages] = useState([
     {
       role: 'coach',
-      text: 'Ask questions about your finances.',
+      text: translate('Ask questions about your finances.', finance.language),
     },
   ]);
 
   const [input, setInput] = useState('');
+
+  useEffect(() => {
+    if (messages.length === 1 && messages[0].role === 'coach') {
+      setMessages([{ role: 'coach', text: t('Ask questions about your finances.') }]);
+    }
+  }, [finance.language]);
 
   const suggestions = [
     'How much did I spend on food?',
@@ -25,7 +33,7 @@ function AiCoach({ transactions: propTransactions }) {
     const q = question.toLowerCase();
 
     // Question 1: Food & Groceries spending
-    if (q.includes('food') || q.includes('groc') || q.includes('din')) {
+    if (['food', 'groc', 'din', 'भोजन', 'खाना', 'किराना', 'ਭੋਜਨ', 'ਖਾਣਾ', 'ਕਰਿਆਨਾ'].some((word) => q.includes(word))) {
       let total = 0;
       for (let i = 0; i < transactions.length; i += 1) {
         const cat = normalizeCategory(transactions[i].category);
@@ -33,22 +41,23 @@ function AiCoach({ transactions: propTransactions }) {
           total += Math.abs(transactions[i].amount);
         }
       }
-      return `You spent ${formatCurrency(total)} on food & groceries.`;
+      return t('You spent {amount} on food & groceries.').replace('{amount}', formatCurrency(total));
     }
 
     // Question 2: Monthly total spending
-    if (q.includes('this month') || q.includes('total spend') || q.includes('spending')) {
+    if (q.includes('this month') || q.includes('total spend') || q.includes('spending')
+      || q.includes('इस महीने') || q.includes('ਇਸ ਮਹੀਨੇ') || q.includes('खर्च') || q.includes('ਖਰਚ')) {
       let total = 0;
       for (let i = 0; i < transactions.length; i += 1) {
         if (transactions[i].amount < 0) {
           total += Math.abs(transactions[i].amount);
         }
       }
-      return `You spent ${formatCurrency(total)} this month.`;
+      return t('You spent {amount} this month.').replace('{amount}', formatCurrency(total));
     }
 
     // Question 3: Subscriptions
-    if (q.includes('subscription')) {
+    if (q.includes('subscription') || q.includes('सदस्यता') || q.includes('ਗਾਹਕੀ')) {
       const subscriptionNames = [
         'Netflix', 'Hotstar', 'JioCinema', 'Cult.fit', 'Spotify', 'Amazon Prime',
       ];
@@ -63,7 +72,7 @@ function AiCoach({ transactions: propTransactions }) {
         }
       }
       if (subs.length === 0) {
-        return 'No subscriptions found in your transactions.';
+        return t('No subscriptions found in your transactions.');
       }
       let list = '';
       for (let i = 0; i < subs.length; i += 1) {
@@ -72,11 +81,12 @@ function AiCoach({ transactions: propTransactions }) {
           list += ', ';
         }
       }
-      return `Your subscriptions: ${list}.`;
+      return `${t('Your subscriptions:')} ${list}.`;
     }
 
     // Question 4: Overspending
-    if (q.includes('overspending') || q.includes('overspend') || q.includes('highest')) {
+    if (q.includes('overspending') || q.includes('overspend') || q.includes('highest')
+      || q.includes('ज़्यादा खर्च') || q.includes('ਵੱਧ ਖਰਚ')) {
       const byCategory = {};
       for (let i = 0; i < transactions.length; i += 1) {
         const t = transactions[i];
@@ -87,14 +97,16 @@ function AiCoach({ transactions: propTransactions }) {
       }
       const entries = Object.entries(byCategory);
       if (entries.length === 0) {
-        return 'No spending recorded yet.';
+        return t('No spending recorded yet.');
       }
       entries.sort((a, b) => b[1] - a[1]);
       const top = entries[0];
-      return `Your highest spending category is ${top[0]} at ${formatCurrency(top[1])}.`;
+      return t('Your highest spending category is {category} at {amount}.')
+        .replace('{category}', t(top[0]))
+        .replace('{amount}', formatCurrency(top[1]));
     }
 
-    return 'I can currently answer questions about your spending, budget and subscriptions.';
+    return t('I can currently answer questions about your spending, budget and subscriptions.');
   }
 
   function handleSubmit(event) {
@@ -114,16 +126,19 @@ function AiCoach({ transactions: propTransactions }) {
     <div className="ai-coach">
       {messages.length === 1 && (
         <div className="ai-coach-suggestions">
-          {suggestions.map((suggestion) => (
+          {suggestions.map((suggestion) => {
+            const localizedSuggestion = t(suggestion);
+            return (
             <button
               key={suggestion}
               type="button"
               className="ai-coach-suggestion"
-              onClick={() => setInput(suggestion)}
+              onClick={() => setInput(localizedSuggestion)}
             >
-              {suggestion}
+              {localizedSuggestion}
             </button>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -131,7 +146,7 @@ function AiCoach({ transactions: propTransactions }) {
         {messages.map((msg, index) => (
           <div key={index} className={`ai-coach-bubble ai-coach-bubble-${msg.role}`}>
             <span className="ai-coach-role">
-              {msg.role === 'user' ? 'User' : 'Coach'}
+              {msg.role === 'user' ? t('User') : t('Coach')}
             </span>
             <p>{msg.text}</p>
           </div>
@@ -143,10 +158,10 @@ function AiCoach({ transactions: propTransactions }) {
           type="text"
           value={input}
           onChange={(event) => setInput(event.target.value)}
-          placeholder="Ask a question..."
+          placeholder={t('Ask a question...')}
         />
         <button type="submit" className="btn-primary">
-          Send
+          {t('Send')}
         </button>
       </form>
     </div>

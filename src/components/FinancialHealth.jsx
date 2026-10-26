@@ -1,9 +1,11 @@
 import React from 'react';
 import { calculateFinancialSummary, formatCurrency } from '../utils/finance';
 import { useFinance } from '../context/FinanceContext';
+import { translate } from '../utils/i18n';
 
 function FinancialHealth({ transactions: propTransactions }) {
   const finance = useFinance();
+  const t = (text) => translate(text, finance.language);
   const transactions = propTransactions || finance.transactions || [];
   const summary = calculateFinancialSummary(transactions);
 
@@ -45,10 +47,10 @@ function FinancialHealth({ transactions: propTransactions }) {
         <p className="health-badge text-success">+8 this month</p>
         <p className="health-note">
           {summary.healthScore >= 75
-            ? 'Strong — savings and cash flow look healthy.'
+            ? t('Strong — savings and cash flow look healthy.')
             : summary.healthScore >= 50
-            ? 'Moderate — monitor your dining and discretionary expenses.'
-            : 'Caution — expenses exceed target budget thresholds.'}
+            ? t('Moderate — monitor your dining and discretionary expenses.')
+            : t('Caution — expenses exceed target budget thresholds.')}
         </p>
       </div>
 
@@ -65,26 +67,26 @@ function FinancialHealth({ transactions: propTransactions }) {
       {/* Existing 4 Metric Cards */}
       <div className="health-grid">
         <div className="health-card">
-          <p className="health-card-label">Money in</p>
+          <p className="health-card-label">{t('Money in')}</p>
           <p className="health-card-value text-success">
             {formatCurrency(summary.totalIncome, true)}
           </p>
         </div>
 
         <div className="health-card">
-          <p className="health-card-label">Money out</p>
+          <p className="health-card-label">{t('Money out')}</p>
           <p className="health-card-value text-danger">
             {formatCurrency(-summary.totalExpenses, true)}
           </p>
         </div>
 
         <div className="health-card">
-          <p className="health-card-label">Savings rate</p>
+          <p className="health-card-label">{t('Savings rate')}</p>
           <p className="health-card-value">{summary.savingsRate}%</p>
         </div>
 
         <div className="health-card">
-          <p className="health-card-label">Net Cash Flow</p>
+          <p className="health-card-label">{t('Net Cash Flow')}</p>
           <p
             className={`health-card-value ${
               summary.totalBalance >= 0 ? 'text-success' : 'text-danger'
@@ -99,10 +101,10 @@ function FinancialHealth({ transactions: propTransactions }) {
       <div className="health-section-card">
         <div className="health-section-header">
           <h3 className="health-section-title">
-            <span>🎯</span> Score Breakdown (How 100 Points is Calculated)
+            {t('Score Breakdown (How 100 Points is Calculated)')}
           </h3>
           <p className="health-section-subtitle">
-            Transparent point distribution based on your live financial health
+            {t('Transparent point distribution based on your live financial health')}
           </p>
         </div>
 
@@ -110,7 +112,7 @@ function FinancialHealth({ transactions: propTransactions }) {
           {/* 1. Savings Rate */}
           <div className="health-breakdown-item">
             <div className="health-breakdown-top">
-              <span className="health-breakdown-name">1. Savings Rate (Max 40 pts)</span>
+              <span className="health-breakdown-name">{t('1. Savings Rate (Max 40 pts)')}</span>
               <span className="health-breakdown-pts">{savingsPts} / 40 pts</span>
             </div>
             <div className="health-breakdown-bar-bg">
@@ -127,7 +129,7 @@ function FinancialHealth({ transactions: propTransactions }) {
           {/* 2. Expense Control */}
           <div className="health-breakdown-item">
             <div className="health-breakdown-top">
-              <span className="health-breakdown-name">2. Expense Control (Max 30 pts)</span>
+              <span className="health-breakdown-name">{t('2. Expense Control (Max 30 pts)')}</span>
               <span className="health-breakdown-pts">{expensePts} / 30 pts</span>
             </div>
             <div className="health-breakdown-bar-bg">
@@ -144,7 +146,7 @@ function FinancialHealth({ transactions: propTransactions }) {
           {/* 3. Cash Flow Stability */}
           <div className="health-breakdown-item">
             <div className="health-breakdown-top">
-              <span className="health-breakdown-name">3. Cash Flow Stability (Max 30 pts)</span>
+              <span className="health-breakdown-name">{t('3. Cash Flow Stability (Max 30 pts)')}</span>
               <span className="health-breakdown-pts">{cashFlowPts} / 30 pts</span>
             </div>
             <div className="health-breakdown-bar-bg">
@@ -164,7 +166,7 @@ function FinancialHealth({ transactions: propTransactions }) {
       <div className="health-tips-card">
         <div className="health-section-header">
           <h3 className="health-section-title">
-            <span>🚀</span> How to Improve Your Score to 90+
+            {t('How to Improve Your Score to 90+')}
           </h3>
           <p className="health-section-subtitle">
             Actionable optimization steps to reach top-tier financial resilience
@@ -175,7 +177,7 @@ function FinancialHealth({ transactions: propTransactions }) {
           {/* Card 1 */}
           <div className="health-tip-card">
             <span className="health-tip-badge">+8 pts</span>
-            <h4 className="health-tip-title">Track Daily Expenses Consistently</h4>
+            <h4 className="health-tip-title">{t('Track Daily Expenses Consistently')}</h4>
             <p className="health-tip-desc">
               Log transactions for 7 days straight to improve budget accuracy.
             </p>
@@ -184,7 +186,7 @@ function FinancialHealth({ transactions: propTransactions }) {
           {/* Card 2 */}
           <div className="health-tip-card">
             <span className="health-tip-badge">+10 pts</span>
-            <h4 className="health-tip-title">Cut Unused Subscriptions</h4>
+            <h4 className="health-tip-title">{t('Cut Unused Subscriptions')}</h4>
             <p className="health-tip-desc">
               Review recurring monthly bills to boost your net cash flow.
             </p>
@@ -193,7 +195,7 @@ function FinancialHealth({ transactions: propTransactions }) {
           {/* Card 3 */}
           <div className="health-tip-card">
             <span className="health-tip-badge">+5 pts</span>
-            <h4 className="health-tip-title">Maintain 20%+ Savings Rate</h4>
+            <h4 className="health-tip-title">{t('Maintain 20%+ Savings Rate')}</h4>
             <p className="health-tip-desc">
               Keep your monthly Money Out below 80% of Money In.
             </p>

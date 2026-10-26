@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import './NoSpendHeatmap.css';
 import { formatCurrency } from '../utils/finance';
 import { useFinance } from '../context/FinanceContext';
+import { translate } from '../utils/i18n';
 
 // Helper to format Date to YYYY-MM-DD
 function formatDateKey(date) {
@@ -12,11 +13,11 @@ function formatDateKey(date) {
 }
 
 // Format human-friendly date: e.g. "Sunday, October 25, 2026"
-function formatReadableDate(dateStr) {
+function formatReadableDate(dateStr, locale = 'en-US') {
   if (!dateStr) return '';
   const [year, month, day] = dateStr.split('-').map(Number);
   const d = new Date(year, month - 1, day);
-  return d.toLocaleDateString('en-US', {
+  return d.toLocaleDateString(locale, {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -26,43 +27,38 @@ function formatReadableDate(dateStr) {
 
 function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAddExpense }) {
   const finance = useFinance();
+  const t = (text) => translate(text, finance.language);
+  const dateLocale = { en: 'en-IN', hi: 'hi-IN', pa: 'pa-IN' }[finance.language] || 'en-IN';
+  const weekdayLabels = {
+    en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    hi: ['रवि', 'सोम', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि'],
+    pa: ['ਐਤ', 'ਸੋਮ', 'ਮੰਗਲ', 'ਬੁੱਧ', 'ਵੀਰ', 'ਸ਼ੁੱਕਰ', 'ਸ਼ਨੀ'],
+  }[finance.language] || ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const transactions = propTransactions || finance.transactions || [];
   const onAddExpense = propOnAddExpense || finance.addTransaction;
-  // Clear any legacy check-in or essential categories storage
-  useEffect(() => {
-    try {
-      localStorage.removeItem('fintrack_nospend_checkins');
-      localStorage.removeItem('fintrack_essential_categories');
-    } catch (e) {
-      // ignore
-    }
-  }, []);
 
   // Real local date & year
   const today = useMemo(() => new Date(), []);
   const todayStr = useMemo(() => formatDateKey(today), [today]);
   const currentYear = useMemo(() => today.getFullYear(), [today]);
 
-  // Selected date for inspector & calendar
-  const [selectedDate, setSelectedDate] = useState(todayStr);
-
-  // Monthly Calendar navigation state
-  const [viewYear, setViewYear] = useState(currentYear);
-  const [viewMonth, setViewMonth] = useState(today.getMonth()); // 0-11
-
-  // Local state for user-logged expenses on calendar (persisted in localStorage)
-  const [customTransactions, setCustomTransactions] = useState(() => {
+  const [heatmapYear, setHeatmapYear] = useState(() => {
     try {
-      const stored = localStorage.getItem('fintrack_user_calendar_txs');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch (e) {
-      console.warn('Error reading user calendar txs:', e);
+      const savedYear = Number(localStorage.getItem('fintrack_activity_calendar_year'));
+      return Number.isInteger(savedYear) && savedYear >= 1970 && savedYear <= 9999
+        ? savedYear
+        : currentYear;
+    } catch {
+      return currentYear;
     }
-    return [];
   });
+  // Selected date for inspector & calendar
+  const [selectedDate, setSelectedDate] = useState(() => (
+    heatmapYear === currentYear ? todayStr : `${heatmapYear}-01-01`
+  ));
+  // Monthly Calendar navigation state
+  const [viewYear, setViewYear] = useState(heatmapYear);
+  const [viewMonth, setViewMonth] = useState(heatmapYear === currentYear ? today.getMonth() : 0); // 0-11
 
   // Quick expense form state in Selected Date Inspector
   const [isAddingExpense, setIsAddingExpense] = useState(false);
@@ -70,36 +66,18 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
   const [newMerchant, setNewMerchant] = useState('');
   const [newCategory, setNewCategory] = useState('Food');
 
-  // Filter ONLY real user-created transactions (exclude all pre-loaded sample data)
-  const userTransactions = useMemo(() => {
-    const fromProps = (Array.isArray(transactions) ? transactions : []).filter(
-      (tx) => tx && (tx.userAdded || (typeof tx.id === 'number' && tx.id > 1000000000))
-    );
-    // Combine with local customTransactions, avoiding duplicates by id
-    const seenIds = new Set(fromProps.map((t) => t.id));
-    const combined = [...fromProps];
-    customTransactions.forEach((tx) => {
-      if (!seenIds.has(tx.id)) {
-        combined.push(tx);
-        seenIds.add(tx.id);
-      }
-    });
-    return combined;
-  }, [transactions, customTransactions]);
-
-  // Group user transactions by date
+  // Group the shared FinanceContext transactions by calendar date.
   const txByDate = useMemo(() => {
     const map = {};
-    userTransactions.forEach((tx) => {
+    (Array.isArray(transactions) ? transactions : []).forEach((tx) => {
       if (!tx || !tx.date) return;
-      const d = String(tx.date).trim();
-      if (!map[d]) {
-        map[d] = [];
-      }
-      map[d].push(tx);
+      const dateKey = String(tx.date).trim().slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return;
+      if (!map[dateKey]) map[dateKey] = [];
+      map[dateKey].push(tx);
     });
     return map;
-  }, [userTransactions]);
+  }, [transactions]);
 
   // Compute spend stats & GitHub green shades for each date
   const getDateStats = (dateStr) => {
@@ -118,69 +96,66 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
       }
     });
 
-    // Rule: ₹0 / No logged expenses: Empty dark square (#161b22)
+    // Income is shown in the selected-day detail list but never colors the heatmap.
     if (totalSpent === 0) {
       return {
         dateStr,
         totalSpent: 0,
         totalIncome,
-        color: '#161b22',
-        borderColor: '#21262d',
+        color: finance.theme === 'light' ? '#f1f5f9' : '#161a22',
+        borderColor: finance.theme === 'light' ? '#e2e8f0' : '#29313a',
         label: totalIncome > 0 ? `Income Logged (${formatCurrency(totalIncome)})` : 'No expenses logged',
         status: 'empty',
         transactions: txList,
       };
     }
 
-    // Rule: ₹1 – ₹500 spent: Light Green (#0e4429)
+    // Spending bands use the same thresholds as the legend.
     if (totalSpent >= 1 && totalSpent <= 500) {
       return {
         dateStr,
         totalSpent,
         totalIncome,
-        color: '#0e4429',
-        borderColor: '#175a37',
+        color: '#dcfce7',
+        borderColor: '#bbf7d0',
         label: `Spent ${formatCurrency(-totalSpent)} (Light Activity)`,
         status: 'level-1',
         transactions: txList,
       };
     }
 
-    // Rule: ₹501 – ₹2,000 spent: Medium Green (#006d32)
     if (totalSpent >= 501 && totalSpent <= 2000) {
       return {
         dateStr,
         totalSpent,
         totalIncome,
-        color: '#006d32',
-        borderColor: '#00873e',
+        color: '#86efac',
+        borderColor: '#4ade80',
         label: `Spent ${formatCurrency(-totalSpent)} (Medium Activity)`,
         status: 'level-2',
         transactions: txList,
       };
     }
 
-    // Rule: ₹2,001 – ₹5,000 spent: Bright Green (#26a641)
     if (totalSpent >= 2001 && totalSpent <= 5000) {
       return {
         dateStr,
         totalSpent,
         totalIncome,
-        color: '#26a641',
-        borderColor: '#2ec24d',
+        color: '#22c55e',
+        borderColor: '#16a34a',
         label: `Spent ${formatCurrency(-totalSpent)} (High Activity)`,
         status: 'level-3',
         transactions: txList,
       };
     }
 
-    // Rule: > ₹5,000 spent (Heavy spend / Rent / Bills day): Neon Green (#39d353)
     return {
       dateStr,
       totalSpent,
       totalIncome,
-      color: '#39d353',
-      borderColor: '#46eb62',
+      color: '#15803d',
+      borderColor: '#166534',
       label: `Spent ${formatCurrency(-totalSpent)} (Heavy Spending Day)`,
       status: 'level-4',
       transactions: txList,
@@ -194,28 +169,13 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
     if (isNaN(val) || val <= 0) return;
 
     const newTx = {
-      id: Date.now(),
       merchant: newMerchant.trim() || 'Expense',
       amount: -Math.abs(val),
       category: newCategory,
       date: selectedDate,
-      userAdded: true,
     };
 
-    // Update local state and persist
-    setCustomTransactions((prev) => {
-      const next = [newTx, ...prev];
-      try {
-        localStorage.setItem('fintrack_user_calendar_txs', JSON.stringify(next));
-      } catch (err) {
-        console.warn('Error saving custom txs:', err);
-      }
-      return next;
-    });
-
-    if (onAddExpense) {
-      onAddExpense(newTx);
-    }
+    onAddExpense(newTx);
 
     setNewAmount('');
     setNewMerchant('');
@@ -227,9 +187,8 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
   // 2. Total Spent This Month (₹)
   // 3. Daily Average Spend (₹)
   const { activeDaysCount, totalSpentMonth, dailyAverage } = useMemo(() => {
-    let activeDays = 0;
-    let totalAllYear = 0;
     let totalMonth = 0;
+    let activeDays = 0;
 
     const thisMonthPrefix = `${currentYear}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 
@@ -241,16 +200,14 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
       });
 
       if (dayExpense > 0) {
-        activeDays += 1;
-        totalAllYear += dayExpense;
-
         if (dStr.startsWith(thisMonthPrefix)) {
+          activeDays += 1;
           totalMonth += dayExpense;
         }
       }
     });
 
-    const avgSpend = activeDays > 0 ? Math.round(totalAllYear / activeDays) : 0;
+    const avgSpend = activeDays > 0 ? Math.round(totalMonth / activeDays) : 0;
 
     return {
       activeDaysCount: activeDays,
@@ -259,10 +216,10 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
     };
   }, [txByDate, currentYear, today]);
 
-  // 52-Week Full Calendar Grid for Current Year
+  // Full-year calendar grid; some years span 53 Sunday-to-Saturday columns.
   const { weeks, monthHeaders } = useMemo(() => {
-    const jan1 = new Date(currentYear, 0, 1);
-    const dec31 = new Date(currentYear, 11, 31);
+    const jan1 = new Date(heatmapYear, 0, 1);
+    const dec31 = new Date(heatmapYear, 11, 31);
 
     // Week starts on Sunday
     const startDate = new Date(jan1);
@@ -280,7 +237,7 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
       for (let d = 0; d < 7; d++) {
         const dayDate = new Date(startDate);
         dayDate.setDate(startDate.getDate() + (w * 7 + d));
-        const inYear = dayDate.getFullYear() === currentYear;
+        const inYear = dayDate.getFullYear() === heatmapYear;
         const dStr = formatDateKey(dayDate);
         days.push({
           date: dayDate,
@@ -292,9 +249,11 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
       weekList.push(days);
     }
 
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = Array.from({ length: 12 }, (_, month) => (
+      new Date(heatmapYear, month, 1).toLocaleDateString(dateLocale, { month: 'short' })
+    ));
     const headers = months.map((monthName, idx) => {
-      const firstDay = new Date(currentYear, idx, 1);
+      const firstDay = new Date(heatmapYear, idx, 1);
       const dayDiff = Math.floor((firstDay - startDate) / (1000 * 60 * 60 * 24));
       const weekCol = Math.floor(dayDiff / 7);
       return {
@@ -307,7 +266,7 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
       weeks: weekList,
       monthHeaders: headers,
     };
-  }, [currentYear]);
+  }, [heatmapYear, dateLocale]);
 
   // Selected date statistics
   const selectedStats = useMemo(() => {
@@ -334,9 +293,20 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
   };
 
   const handleJumpToToday = () => {
-    setViewYear(currentYear);
+    changeHeatmapYear(currentYear, todayStr);
     setViewMonth(today.getMonth());
-    setSelectedDate(todayStr);
+  };
+
+  const changeHeatmapYear = (year, selectedDay = `${year}-01-01`) => {
+    setHeatmapYear(year);
+    setSelectedDate(selectedDay);
+    setViewYear(year);
+    setViewMonth(0);
+    try {
+      localStorage.setItem('fintrack_activity_calendar_year', String(year));
+    } catch {
+      // Keep the year selection for this session if storage is unavailable.
+    }
   };
 
   // Build Monthly Calendar cells
@@ -366,19 +336,19 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
     return cells;
   }, [viewYear, viewMonth, selectedDate, todayStr, txByDate]);
 
-  const viewMonthName = new Date(viewYear, viewMonth, 1).toLocaleDateString('en-US', {
+  const viewMonthName = new Date(viewYear, viewMonth, 1).toLocaleDateString(dateLocale, {
     month: 'long',
     year: 'numeric',
   });
 
   return (
     <div className="ns-container">
-      {/* Header Card */}
       <div className="ns-header">
         <div className="ns-header-left">
-          <h1 className="ns-title">📅 Activity Calendar & Spending Heatmap</h1>
+          <span className="ns-breadcrumb">{t('Dashboard')} <span aria-hidden="true">/</span> {t('Activity Calendar')}</span>
+          <h1 className="ns-title">{t('Activity Calendar & Spending Heatmap')}</h1>
           <p className="ns-subtitle">
-            Visual GitHub-style expense tracker. Every day starts clean and dark until you log real expenses.
+            {t('Visualize your spending patterns, track your activity and stay consistent with your financial goals.')}
           </p>
         </div>
 
@@ -387,64 +357,80 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
             type="button"
             className="ns-btn-checkin"
             onClick={() => {
-              setSelectedDate(todayStr);
               setIsAddingExpense(true);
+              document.getElementById('ns-inspector')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }}
-            title="Log an expense for today"
+            title={`${t('Log Expense')} · ${selectedDate}`}
           >
-            ➕ Log Expense for Today
+            + {t('Log Expense')}
           </button>
         </div>
       </div>
 
-      {/* 3 Practical Real-Life Metrics */}
+      {/* Summary metrics */}
       <div className="ns-stats-grid">
         <div className="ns-stat-card">
-          <div className="ns-stat-icon-wrapper ns-stat-icon-streak">📅</div>
+          <div className="ns-stat-icon-wrapper ns-stat-icon-streak" aria-hidden="true">▦</div>
           <div className="ns-stat-info">
-            <span className="ns-stat-label">Active Logging Days</span>
-            <span className="ns-stat-value">
-              {activeDaysCount} {activeDaysCount === 1 ? 'Day' : 'Days'}
-            </span>
-            <span className="ns-stat-subtext">Days with at least 1 expense logged</span>
+            <span className="ns-stat-label">{t('Active Logging Days')}</span>
+            <span className="ns-stat-value">{activeDaysCount}</span>
+            <span className="ns-stat-subtext">{t('Days with at least 1 expense logged.')}</span>
           </div>
         </div>
 
         <div className="ns-stat-card">
-          <div className="ns-stat-icon-wrapper ns-stat-icon-total">💰</div>
+          <div className="ns-stat-icon-wrapper ns-stat-icon-total" aria-hidden="true">₹</div>
           <div className="ns-stat-info">
-            <span className="ns-stat-label">Total Spent This Month</span>
+            <span className="ns-stat-label">{t('Total Spent This Month')}</span>
             <span className="ns-stat-value">{formatCurrency(totalSpentMonth)}</span>
-            <span className="ns-stat-subtext">Expenses in current month</span>
+            <span className="ns-stat-subtext">{t('Expenses in current month.')}</span>
           </div>
         </div>
 
         <div className="ns-stat-card">
-          <div className="ns-stat-icon-wrapper ns-stat-icon-best">📊</div>
+          <div className="ns-stat-icon-wrapper ns-stat-icon-best" aria-hidden="true">↗</div>
           <div className="ns-stat-info">
-            <span className="ns-stat-label">Daily Average Spend</span>
+            <span className="ns-stat-label">{t('Daily Average Spend')}</span>
             <span className="ns-stat-value">{formatCurrency(dailyAverage)}</span>
-            <span className="ns-stat-subtext">Average per active spending day</span>
+            <span className="ns-stat-subtext">{t('Average per active spending day.')}</span>
           </div>
         </div>
       </div>
 
-      {/* 52-Week Full-Year GitHub / LeetCode Heatmap */}
+      {/* Full-year spending heatmap */}
       <div className="ns-card">
         <div className="ns-card-header">
           <div className="ns-card-title-group">
-            <h3 className="ns-card-title">📅 {currentYear} Spending Heatmap (52 Weeks)</h3>
+            <h3 className="ns-card-title">{heatmapYear} {t('Spending Heatmap')}</h3>
             <p className="ns-card-subtitle">
-              Squares are dark by default. Green shades represent daily spend volume. Click any cell to inspect or log an expense.
+              {t('Each square represents a day. Darker greens indicate higher spending.')}
             </p>
+          </div>
+          <div className="ns-year-controls"           aria-label={t('Choose heatmap year')}>
+            <button
+              type="button"
+              className="ns-cal-nav-btn"
+              onClick={() => changeHeatmapYear(heatmapYear - 1)}
+              aria-label={t('Previous year')}
+            >
+              ‹
+            </button>
+            <span className="ns-year-label">{heatmapYear}</span>
+            <button
+              type="button"
+              className="ns-cal-nav-btn"
+              onClick={() => changeHeatmapYear(heatmapYear + 1)}
+              aria-label={t('Next year')}
+            >
+              ›
+            </button>
           </div>
         </div>
 
         <div className="ns-heatmap-wrapper">
           <div className="ns-heatmap-container">
-            {/* Month labels across top */}
-            <div className="ns-months-row">
-              <div /> {/* Spacer for Sun-Sat labels */}
+            <div className="ns-months-row" style={{ gridTemplateColumns: `36px repeat(${weeks.length}, 1fr)` }}>
+              <div />
               {monthHeaders.map((m) => (
                 <div
                   key={m.name}
@@ -456,20 +442,11 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
               ))}
             </div>
 
-            {/* Heatmap Grid Body */}
-            <div className="ns-heatmap-body">
-              {/* Day Labels on the Left (Sun-Sat) */}
+            <div className="ns-heatmap-body" style={{ gridTemplateColumns: `36px repeat(${weeks.length}, 1fr)` }}>
               <div className="ns-day-labels">
-                <span className="ns-day-label">Sun</span>
-                <span className="ns-day-label">Mon</span>
-                <span className="ns-day-label">Tue</span>
-                <span className="ns-day-label">Wed</span>
-                <span className="ns-day-label">Thu</span>
-                <span className="ns-day-label">Fri</span>
-                <span className="ns-day-label">Sat</span>
+                    {weekdayLabels.map((label) => <span key={label} className="ns-day-label">{label}</span>)}
               </div>
 
-              {/* 53 Week Columns */}
               {weeks.map((week, wIdx) => (
                 <div key={`week-${wIdx}`} className="ns-week-col">
                   {week.map((dayItem, dIdx) => {
@@ -482,7 +459,8 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
                     const isToday = dayItem.dateStr === todayStr;
 
                     return (
-                      <div
+                      <button
+                        type="button"
                         key={dayItem.dateStr}
                         className={`ns-cell ${isSelected ? 'ns-cell-selected' : ''} ${
                           isToday ? 'ns-cell-today' : ''
@@ -492,6 +470,7 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
                           borderColor: stats.borderColor,
                         }}
                         onClick={() => setSelectedDate(dayItem.dateStr)}
+                        aria-label={`${formatReadableDate(dayItem.dateStr, dateLocale)}: ${stats.label}`}
                         title={`${dayItem.dateStr}: ${stats.label}`}
                       />
                     );
@@ -502,60 +481,55 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
           </div>
         </div>
 
-        {/* Legend */}
         <div className="ns-legend-row">
           <span className="ns-legend-note">
-            Selected: <strong>{selectedDate}</strong>
+            {t('Selected:')} <strong>{formatReadableDate(selectedDate, dateLocale)}</strong>
           </span>
 
           <div className="ns-legend-items">
             <div className="ns-legend-item">
-              <span className="ns-legend-color" style={{ backgroundColor: '#161b22', borderColor: '#21262d' }} />
-              <span>₹0 / No Expenses</span>
+              <span className="ns-legend-color ns-level-empty" />
+              <span>{t('₹0 / No Expenses')}</span>
             </div>
             <div className="ns-legend-item">
-              <span className="ns-legend-color" style={{ backgroundColor: '#0e4429', borderColor: '#175a37' }} />
-              <span>₹1 – ₹500</span>
+              <span className="ns-legend-color ns-level-one" />
+              <span>{t('₹1–₹500')}</span>
             </div>
             <div className="ns-legend-item">
-              <span className="ns-legend-color" style={{ backgroundColor: '#006d32', borderColor: '#00873e' }} />
-              <span>₹501 – ₹2,000</span>
+              <span className="ns-legend-color ns-level-two" />
+              <span>{t('₹501–₹2,000')}</span>
             </div>
             <div className="ns-legend-item">
-              <span className="ns-legend-color" style={{ backgroundColor: '#26a641', borderColor: '#2ec24d' }} />
-              <span>₹2,001 – ₹5,000</span>
+              <span className="ns-legend-color ns-level-three" />
+              <span>{t('₹2,001–₹5,000')}</span>
             </div>
             <div className="ns-legend-item">
-              <span className="ns-legend-color" style={{ backgroundColor: '#39d353', borderColor: '#46eb62' }} />
-              <span>&gt; ₹5,000</span>
+              <span className="ns-legend-color ns-level-four" />
+              <span>{t('Above ₹5,000')}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Lower Section: Monthly Calendar + Selected Date Inspector */}
+      {/* Month calendar and selected-day detail */}
       <div className="ns-lower-grid">
-        {/* Monthly Calendar View */}
         <div className="ns-card">
           <div className="ns-cal-header">
-            <h3 className="ns-cal-title">
-              <span>🗓️</span> {viewMonthName}
-            </h3>
-
+            <h3 className="ns-cal-title">{viewMonthName}</h3>
             <div className="ns-cal-nav">
               <button
                 type="button"
                 className="ns-btn-secondary"
                 onClick={handleJumpToToday}
-                title="Jump to today"
+                title={t('Jump to today')}
               >
-                Today
+                {t('Today')}
               </button>
               <button
                 type="button"
                 className="ns-cal-nav-btn"
                 onClick={handlePrevMonth}
-                title="Previous Month"
+                title={t('Previous Month')}
               >
                 ‹
               </button>
@@ -563,7 +537,7 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
                 type="button"
                 className="ns-cal-nav-btn"
                 onClick={handleNextMonth}
-                title="Next Month"
+                title={t('Next Month')}
               >
                 ›
               </button>
@@ -571,13 +545,7 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
           </div>
 
           <div className="ns-cal-grid">
-            <div className="ns-cal-day-header">Sun</div>
-            <div className="ns-cal-day-header">Mon</div>
-            <div className="ns-cal-day-header">Tue</div>
-            <div className="ns-cal-day-header">Wed</div>
-            <div className="ns-cal-day-header">Thu</div>
-            <div className="ns-cal-day-header">Fri</div>
-            <div className="ns-cal-day-header">Sat</div>
+            {weekdayLabels.map((label) => <div key={label} className="ns-cal-day-header">{label}</div>)}
 
             {monthlyCalendarCells.map((cell) => {
               if (cell.empty) {
@@ -585,89 +553,74 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
               }
 
               const { stats, dayNumber, dateStr, isToday, isSelected } = cell;
-
               return (
-                <div
+                <button
+                  type="button"
                   key={cell.key}
                   className={`ns-cal-cell ${isSelected ? 'ns-cal-cell-selected' : ''} ${
                     isToday ? 'ns-cal-cell-today' : ''
                   }`}
                   style={{
-                    backgroundColor: stats.status === 'empty' ? '#161b22' : 'rgba(22, 27, 34, 0.9)',
-                    borderColor: isSelected ? '#38bdf8' : stats.borderColor,
+                    ...(stats.status === 'empty' ? {} : { backgroundColor: stats.color }),
+                    borderColor: isSelected ? '#15803d' : stats.borderColor,
                   }}
-                  onClick={() => setSelectedDate(dateStr)}
+                  onClick={() => {
+                    const year = Number(dateStr.slice(0, 4));
+                    if (year !== heatmapYear) changeHeatmapYear(year, dateStr);
+                    else setSelectedDate(dateStr);
+                  }}
                   title={`${dateStr}: ${stats.label}`}
                 >
                   <div className="ns-cal-cell-top">
                     <span className="ns-cal-day-num">{dayNumber}</span>
-                    {isToday && <span className="ns-cal-today-badge">TODAY</span>}
+                    {isToday && <span className="ns-cal-today-badge">{t('Today').toUpperCase()}</span>}
                   </div>
-
                   <div className="ns-cal-cell-bottom">
-                    <span
-                      className="ns-cal-indicator-dot"
-                      style={{ backgroundColor: stats.color }}
-                    />
+                    <span className="ns-cal-indicator-dot" style={{ backgroundColor: stats.color }} />
                     {stats.totalSpent > 0 && (
-                      <span
-                        className="ns-cal-spend-tag"
-                        style={{
-                          backgroundColor: stats.color,
-                          color: '#ffffff',
-                        }}
-                      >
+                      <span className="ns-cal-spend-tag" style={{ backgroundColor: stats.color, color: '#0f172a' }}>
                         ₹{stats.totalSpent.toLocaleString('en-IN')}
                       </span>
                     )}
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
         </div>
 
-        {/* Selected Date Details Inspector Panel */}
-        <div className="ns-card ns-inspector">
+        <div className="ns-card ns-inspector" id="ns-inspector">
           <div className="ns-inspector-header">
-            <span className="ns-card-subtitle">Selected Date Inspector</span>
-            <h3 className="ns-inspector-date">{formatReadableDate(selectedDate)}</h3>
-
-            {/* Status Badge */}
-            <div
-              className={`ns-inspector-badge ${
-                selectedStats.status === 'level-4'
-                  ? 'ns-badge-level-4'
-                  : selectedStats.status === 'level-3'
-                  ? 'ns-badge-level-3'
-                  : selectedStats.status === 'level-2'
-                  ? 'ns-badge-level-2'
-                  : selectedStats.status === 'level-1'
-                  ? 'ns-badge-level-1'
-                  : 'ns-badge-unlogged'
-              }`}
-            >
-              <span>{selectedStats.totalSpent > 0 ? '🟢' : '⚪'}</span>
-              <span>{selectedStats.label}</span>
+            <span className="ns-card-subtitle">{t('Selected date')}</span>
+            <h3 className="ns-inspector-date">{formatReadableDate(selectedDate, dateLocale)}</h3>
+            <div className="ns-inspector-badge ns-badge-unlogged">
+              {selectedStats.totalSpent > 0
+                ? `${formatCurrency(selectedStats.totalSpent)} ${t('spent')}`
+                : t('No expenses logged')}
             </div>
           </div>
-
-          {/* Quick Expense Logging Button / Form */}
+          <button
+            type="button"
+            className="ns-details-link"
+            onClick={() => document.getElementById('ns-inspector')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+          >
+            {t('View details')} <span aria-hidden="true">→</span>
+          </button>
           {!isAddingExpense ? (
             <button
               type="button"
               className="ns-inspector-action ns-btn-toggle-on"
               onClick={() => setIsAddingExpense(true)}
             >
-              ➕ Log Expense for {selectedDate}
+              + {t('Log Expense')} · {selectedDate}
             </button>
           ) : (
             <form onSubmit={handleSaveExpense} className="ns-add-expense-form">
-              <span className="ns-form-title">Log Expense on {selectedDate}</span>
+              <span className="ns-form-title">{t('Log Expense')} · {selectedDate}</span>
               <div className="ns-form-row">
                 <input
                   type="number"
-                  placeholder="Amount (₹)"
+                  placeholder={t('Amount (₹)')}
                   className="ns-form-input"
                   value={newAmount}
                   onChange={(e) => setNewAmount(e.target.value)}
@@ -681,88 +634,52 @@ function NoSpendHeatmap({ transactions: propTransactions, onAddExpense: propOnAd
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
                 >
-                  <option value="Food">Food</option>
-                  <option value="Groceries">Groceries</option>
-                  <option value="Transport">Transport</option>
-                  <option value="Shopping">Shopping</option>
-                  <option value="Entertainment">Entertainment</option>
-                  <option value="Bills">Bills</option>
-                  <option value="Rent">Rent</option>
-                  <option value="Utilities">Utilities</option>
-                  <option value="Health">Health</option>
-                  <option value="Others">Others</option>
+                  {['Food', 'Groceries', 'Transport', 'Shopping', 'Entertainment', 'Bills', 'Rent', 'Utilities', 'Health', 'Others']
+                    .map((category) => <option key={category} value={category}>{t(category)}</option>)}
                 </select>
               </div>
-
               <input
                 type="text"
-                placeholder="Merchant / Note (e.g., Grocery, Cafe, Amazon)"
+                placeholder={t('Merchant or note')}
                 className="ns-form-input"
                 value={newMerchant}
                 onChange={(e) => setNewMerchant(e.target.value)}
               />
-
               <div className="ns-form-actions">
-                <button type="submit" className="ns-btn-submit">
-                  Save Expense
-                </button>
-                <button
-                  type="button"
-                  className="ns-btn-cancel"
-                  onClick={() => setIsAddingExpense(false)}
-                >
-                  Cancel
+                <button type="submit" className="ns-btn-submit">{t('Save Expense')}</button>
+                <button type="button" className="ns-btn-cancel" onClick={() => setIsAddingExpense(false)}>
+                  {t('Cancel')}
                 </button>
               </div>
             </form>
           )}
-
-          {/* Breakdown Metrics for Selected Date */}
           <div className="ns-inspector-metrics">
             <div className="ns-metric-box">
-              <span className="ns-metric-title">Total Spent</span>
-              <span
-                className={`ns-metric-value ${
-                  selectedStats.totalSpent > 0 ? 'ns-text-danger' : 'ns-text-muted'
-                }`}
-              >
-                {formatCurrency(-selectedStats.totalSpent)}
+              <span className="ns-metric-title">{t('Total expenses')}</span>
+              <span className={`ns-metric-value ${selectedStats.totalSpent > 0 ? 'ns-text-danger' : 'ns-text-muted'}`}>
+                {formatCurrency(selectedStats.totalSpent)}
               </span>
             </div>
-
             <div className="ns-metric-box">
-              <span className="ns-metric-title">Transactions</span>
+              <span className="ns-metric-title">{t('Transactions')}</span>
               <span className="ns-metric-value">{selectedStats.transactions.length}</span>
             </div>
           </div>
-
-          {/* Real Expenses on Selected Date */}
           <div className="ns-tx-section">
-            <span className="ns-tx-title">
-              Logged Expenses ({selectedStats.transactions.length})
-            </span>
-
+            <span className="ns-tx-title">{t('Transactions')} ({selectedStats.transactions.length})</span>
             {selectedStats.transactions.length === 0 ? (
-              <div className="ns-tx-empty">No transactions recorded on this date.</div>
+              <div className="ns-tx-empty">{t('No transactions recorded on this date.')}</div>
             ) : (
               <div className="ns-tx-list">
-                {selectedStats.transactions.map((tx) => {
+                {selectedStats.transactions.map((tx, index) => {
                   const amt = Number(tx.amount) || 0;
-                  const cat = (tx.category || '').trim();
-
                   return (
-                    <div key={tx.id || Math.random()} className="ns-tx-item">
+                    <div key={tx.id ?? `${tx.date}-${tx.merchant}-${index}`} className="ns-tx-item">
                       <div className="ns-tx-left">
                         <span className="ns-tx-merchant">{tx.merchant || 'Expense'}</span>
-                        <span className="ns-tx-cat-tag">
-                          <span>🏷️</span>
-                          <span>{cat}</span>
-                        </span>
+                        <span className="ns-tx-cat-tag">{tx.category || 'Uncategorized'}</span>
                       </div>
-
-                      <span
-                        className={`ns-tx-amount ${amt < 0 ? 'ns-text-danger' : 'ns-text-success'}`}
-                      >
+                      <span className={`ns-tx-amount ${amt < 0 ? 'ns-text-danger' : 'ns-text-success'}`}>
                         {formatCurrency(amt, amt > 0)}
                       </span>
                     </div>

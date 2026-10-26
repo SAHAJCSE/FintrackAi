@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import '../login.css';
+import LanguageSelector from './LanguageSelector';
+import { translate } from '../utils/i18n';
 
 function Login({ onLogin, onNavigateToCreateAccount, onBackToHome }) {
   const finance = useFinance();
+  const t = (text) => translate(text, finance.language);
   const handleLogin = onLogin || finance.login;
   const handleNavigateToCreateAccount = onNavigateToCreateAccount || (() => {
     finance.setIsRegistering(true);
@@ -58,25 +61,15 @@ function Login({ onLogin, onNavigateToCreateAccount, onBackToHome }) {
         {/* Left branding panel */}
         <aside className="login-brand-panel">
           <div className="brand-content">
-            <div className="brand-logo">
-              <span>FT</span>
-            </div>
-            <h1 className="brand-title">FinTrack AI</h1>
-            <p className="brand-tagline">
-              Your intelligent financial coach — track, predict, and grow your wealth with AI.
-            </p>
-
-            <div className="brand-testimonial">
-              <p className="testimonial-quote">
-                "FinTrack AI helped me save ₹25,000 in just 4 months. The insights are incredible."
+            <div className="login-sticker login-presentation-sticker">
+              <h1 className="brand-title">FinTrack AI</h1>
+              <p className="brand-tagline">
+                Your intelligent financial coach — track, predict, and grow your wealth with AI.
               </p>
-              <div className="testimonial-author">
-                <div className="testimonial-avatar">R</div>
-                <div>
-                  <p className="testimonial-name">Rohan Sharma</p>
-                  <p className="testimonial-role">Product Designer</p>
-                </div>
-              </div>
+              <img
+                src="/images/login-presentation.png"
+                alt="Person presenting a financial chart"
+              />
             </div>
           </div>
         </aside>
@@ -84,6 +77,18 @@ function Login({ onLogin, onNavigateToCreateAccount, onBackToHome }) {
         {/* Right form panel */}
         <main className="login-form-panel">
           <div className="login-card">
+            <div className="auth-controls">
+              <button
+                type="button"
+                className="auth-theme-toggle"
+                onClick={finance.toggleTheme}
+                aria-label={finance.theme === 'dark' ? t('Switch to light mode') : t('Switch to dark mode')}
+                title={finance.theme === 'dark' ? t('Switch to light mode') : t('Switch to dark mode')}
+              >
+                {finance.theme === 'dark' ? t('Light mode') : t('Dark mode')}
+              </button>
+              <LanguageSelector className="auth-language-selector" />
+            </div>
             {handleBackToHome && (
               <button
                 type="button"
@@ -111,9 +116,9 @@ function Login({ onLogin, onNavigateToCreateAccount, onBackToHome }) {
             </div>
 
             <div className="login-card-header">
-              <h2 className="login-title">Welcome back</h2>
+              <h2 className="login-title">{t('Welcome back')}</h2>
               <p className="login-subtitle">
-                Sign in to your financial dashboard
+                {t('Sign in to your financial dashboard')}
               </p>
             </div>
 
@@ -129,7 +134,7 @@ function Login({ onLogin, onNavigateToCreateAccount, onBackToHome }) {
 
               {/* Email */}
               <div className="form-group">
-                <label htmlFor="login-email" className="form-label">Email address</label>
+                <label htmlFor="login-email" className="form-label">{t('Email address')}</label>
                 <div className="input-wrapper">
                   <input
                     id="login-email"
@@ -147,8 +152,8 @@ function Login({ onLogin, onNavigateToCreateAccount, onBackToHome }) {
               {/* Password */}
               <div className="form-group">
                 <div className="label-row">
-                  <label htmlFor="login-password" className="form-label">Password</label>
-                  <button type="button" className="forgot-link">Forgot password?</button>
+                  <label htmlFor="login-password" className="form-label">{t('Password')}</label>
+                  <button type="button" className="forgot-link">{t('Forgot password?')}</button>
                 </div>
                 <div className="input-wrapper">
                   <input
@@ -188,9 +193,9 @@ function Login({ onLogin, onNavigateToCreateAccount, onBackToHome }) {
                 disabled={loading}
               >
                 {loading ? (
-                  <><span className="spinner" />Signing in…</>
+                  <><span className="spinner" />{t('Signing in…')}</>
                 ) : (
-                  'Sign in'
+                  t('Sign in')
                 )}
               </button>
 
@@ -212,9 +217,9 @@ function Login({ onLogin, onNavigateToCreateAccount, onBackToHome }) {
                   marginTop: '10px',
                   padding: '11px',
                   borderRadius: '10px',
-                  background: 'rgba(52, 211, 153, 0.1)',
-                  border: '1px solid rgba(52, 211, 153, 0.3)',
-                  color: '#34d399',
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--login-border)',
+                  color: 'var(--text-main)',
                   fontWeight: 600,
                   fontSize: '13px',
                   cursor: 'pointer',
@@ -226,19 +231,19 @@ function Login({ onLogin, onNavigateToCreateAccount, onBackToHome }) {
                   gap: '6px',
                 }}
               >
-                ⚡ Quick Demo Sign In (Instant Access)
+                Quick Demo Sign In
               </button>
             </form>
 
             <p className="signup-prompt">
-              Don't have an account?{' '}
+              {t('Don’t have an account?')}{' '}
               <button
                 type="button"
                 className="signup-link"
                 id="signup-link-btn"
                 onClick={handleNavigateToCreateAccount}
               >
-                Create one free
+                {t('Create one free')}
               </button>
             </p>
           </div>

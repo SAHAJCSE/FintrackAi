@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useFinance } from '../context/FinanceContext';
+import { translate } from '../utils/i18n';
 
 function BudgetPrediction({ transactions: propTransactions }) {
   const finance = useFinance();
+  const t = (text) => translate(text, finance.language);
   const transactions = propTransactions || finance.transactions || [];
   const [prediction, setPrediction] = useState(0);
 
@@ -40,23 +42,23 @@ function BudgetPrediction({ transactions: propTransactions }) {
   return (
     <div className="budget-prediction">
       <p className="prediction-amount">₹{prediction.toLocaleString('en-IN')}</p>
-      <p className="prediction-sub">Total spending across all categories for this period.</p>
+      <p className="prediction-sub">{t('Total spending across all categories for this period.')}</p>
       {diningTotal > 0 && (
         <p className="prediction-warning">
-          Possible ₹{Math.round(diningTotal * 0.1 / 10) * 10} overspend on dining by week 5.
+          {t('Possible overspend on dining by week 5.').replace('{amount}', `₹${Math.round(diningTotal * 0.1 / 10) * 10}`)}
         </p>
       )}
 
       {categoryEntries.length > 0 && (
         <div className="budget-breakdown">
-          <p className="budget-breakdown-title">Spending by category</p>
+          <p className="budget-breakdown-title">{t('Spending by category')}</p>
           <ul className="budget-breakdown-list">
             {categoryEntries.map((entry) => {
               const category = entry[0];
               const amount = entry[1];
               return (
                 <li key={category} className="budget-breakdown-row">
-                  <span className="budget-breakdown-name">{category}</span>
+                  <span className="budget-breakdown-name">{t(category)}</span>
                   <span className="budget-breakdown-value">
                     ₹{Math.round(amount).toLocaleString('en-IN')}
                   </span>

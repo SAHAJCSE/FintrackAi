@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useFinance } from './context/FinanceContext';
 import HomePage from './components/HomePage';
 import Login from './components/Login';
@@ -14,7 +14,9 @@ import BudgetPrediction from './components/BudgetPrediction';
 import ReceiptScanner from './components/ReceiptScanner';
 import SpendingCard from './components/SpendingCard';
 import NoSpendHeatmap from './components/NoSpendHeatmap';
+import VoiceFinancePage from './components/VoiceFinancePage';
 import { formatCurrency } from './utils/finance';
+import { translate } from './utils/i18n';
 
 function App() {
   const {
@@ -40,6 +42,7 @@ function App() {
 
     theme,
     toggleTheme,
+    language,
 
     activePage,
     navigateTo,
@@ -55,6 +58,23 @@ function App() {
     openAddExpense,
     closeAddExpense,
   } = useFinance();
+  const t = (text) => translate(text, language);
+
+  useEffect(() => {
+    const handleShortcut = (event) => {
+      const target = event.target;
+      const isTyping = target instanceof HTMLElement
+        && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+      const isScannerShortcut = event.key.toLowerCase() === 's'
+        && (event.ctrlKey && event.altKey || event.metaKey && event.altKey);
+
+      if (!isScannerShortcut || !isLoggedIn || isTyping) return;
+      event.preventDefault();
+      navigateTo('scanner', '/receipt-scanner');
+    };
+    window.addEventListener('keydown', handleShortcut);
+    return () => window.removeEventListener('keydown', handleShortcut);
+  }, [isLoggedIn, navigateTo]);
 
   // 1. Dedicated Minimal Animated Home Page (Public Landing - Shown before login)
   if (activePage === 'home') {
@@ -141,6 +161,7 @@ function App() {
     onAiCoachClick: () => navigateTo('aicoach', '/ai-coach'),
     onReceiptScannerClick: () => navigateTo('scanner', '/receipt-scanner'),
     onNoSpendClick: () => navigateTo('nospend', '/no-spend'),
+    onVoiceFinanceClick: () => navigateTo('voice', '/voice-finance'),
     onLogout: () => {
       setIsLoggedIn(false);
       navigateTo('home', '/');
@@ -159,6 +180,23 @@ function App() {
           <ReceiptScanner
             onBackToDashboard={() => navigateTo('dashboard', '/dashboard')}
             onAddExpense={addTransaction}
+            onToggleSidebar={toggleSidebar}
+          />
+        </main>
+      </div>
+    );
+  }
+
+  if (activePage === 'voice') {
+    return (
+      <div className="voice-finance-page">
+        {isSidebarOpenMobile && (
+          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
+        )}
+        <Sidebar {...sidebarProps} />
+        <main className="voice-finance-main">
+          <VoiceFinancePage
+            onBackToDashboard={() => navigateTo('dashboard', '/dashboard')}
             onToggleSidebar={toggleSidebar}
           />
         </main>
@@ -331,44 +369,27 @@ function App() {
               onClick={toggleTheme}
               title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
             >
-              {theme === 'dark' ? '☀️ Light Theme' : '🌙 Dark Theme'}
+              {theme === 'dark' ? 'Light Theme' : 'Dark Theme'}
             </button>
             <div>
-              <h1 className="header-title">Welcome back, Rohan!</h1>
-              <p className="header-subtitle">Your AI financial coach — October overview</p>
+              <h1 className="header-title">{t('Welcome back, Rohan!')}</h1>
+              <p className="header-subtitle">{t('Your AI financial coach — October overview')}</p>
             </div>
           </div>
 
           <div className="header-actions">
             <button
               type="button"
-              className="btn-secondary"
-              onClick={() => navigateTo('home', '/')}
-              title="Return to Home Landing Page"
-            >
-              🏠 Home
-            </button>
-            <button
-              type="button"
-              className="btn-secondary"
+              className="btn-secondary scanner-shortcut"
               onClick={() => navigateTo('scanner', '/receipt-scanner')}
+              aria-keyshortcuts="Control+Alt+S Meta+Alt+S"
+              title={t('Open the receipt scanner with Ctrl+Alt+S.')}
             >
-              🧾 Scan Receipt
+              {t('Receipt Scanner')}
+              <kbd>Ctrl+Alt+S</kbd>
             </button>
             <button type="button" className="btn-primary" onClick={() => openAddExpense('Food')}>
-              + Add Transaction
-            </button>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => {
-                setIsLoggedIn(false);
-                navigateTo('home', '/');
-              }}
-              title="Log out of FinTrack AI"
-              style={{ color: '#f87171', borderColor: 'rgba(248, 113, 113, 0.3)' }}
-            >
-              Logout
+              {t('+ Add Transaction')}
             </button>
           </div>
         </header>
@@ -379,7 +400,7 @@ function App() {
           <div className="grid-left-col">
             {/* Top 2 Cards: Score & Balance */}
             <div className="two-cards-row">
-              <Panel title="Financial health score" action="Read all" onAction={() => navigateTo('health', '/health')}>
+              <Panel title={t('Financial health score')} action={t('Read all')} onAction={() => navigateTo('health', '/health')}>
                 <div className="score-row">
                   <span className="score-number">{financialSummary.healthScore}</span>
                   <span className="score-badge text-success">+8 this month</span>
@@ -397,19 +418,19 @@ function App() {
                 </p>
               </Panel>
 
-              <Panel title="Total balance">
+              <Panel title={t('Total balance')}>
                 <p className={`balance-number ${financialSummary.totalBalance < 0 ? 'text-danger' : ''}`}>
                   {formatCurrency(financialSummary.totalBalance)}
                 </p>
                 <div className="balance-details">
                   <div>
-                    <p className="detail-label">Money in</p>
+                    <p className="detail-label">{t('Money in')}</p>
                     <p className="detail-value text-success">
                       {formatCurrency(financialSummary.totalIncome, true)}
                     </p>
                   </div>
                   <div>
-                    <p className="detail-label">Money out</p>
+                    <p className="detail-label">{t('Money out')}</p>
                     <p className="detail-value text-danger">
                       {formatCurrency(-financialSummary.totalExpenses, true)}
                     </p>
@@ -419,7 +440,7 @@ function App() {
             </div>
 
             {/* Comprehensive 10 Spending Overview Category Cards */}
-            <Panel title="Spending Overview" action="Last 3 Months">
+            <Panel title={t('Spending Overview')} action="Last 3 Months">
               <div className="spending-overview-grid">
                 {spendingCategories.map((cat) => (
                   <SpendingCard key={cat.id} {...cat} />
@@ -428,7 +449,7 @@ function App() {
             </Panel>
 
             {/* AI Spending Insights */}
-            <Panel title="AI spending insights">
+            <Panel title={t('AI spending insights')}>
               <ul className="insights-list">
                 {insights.map((text) => (
                   <li key={text} className="insight-item">
@@ -441,11 +462,11 @@ function App() {
 
             {/* Budget Prediction & Detected Subscriptions */}
             <div className="two-cards-row">
-              <Panel title="Budget prediction">
+              <Panel title={t('Budget prediction')}>
                 <BudgetPrediction transactions={transactions} />
               </Panel>
 
-              <Panel title="Detected subscriptions" action="Show more">
+              <Panel title={t('Detected subscriptions')} action={t('Show more')}>
               <div className="list-container">
                 {subscriptions.map((item) => (
                   <ListRow
@@ -465,8 +486,8 @@ function App() {
           {/* Right Column */}
           <div className="grid-right-col">
             <Panel
-              title="Bill reminders"
-              action="Add bill"
+              title={t('Bill reminders')}
+              action={t('Add bill')}
               onAction={() => openAddExpense('Bills')}
             >
               <div className="list-container">
@@ -481,7 +502,7 @@ function App() {
               </div>
             </Panel>
 
-            <Panel title="Investment suggestions">
+            <Panel title={t('Investment suggestions')}>
               <div className="list-container">
                 {investments.map((item) => (
                   <ListRow key={item.name} {...item} />

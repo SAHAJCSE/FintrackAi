@@ -1,59 +1,52 @@
-# FinTrack AI — Personal Financial Coach
+# FinTrack AI
 
-## Problem Statement
+FinTrack AI is a React and Vite personal-finance dashboard for recording transactions and reviewing spending in the browser. It is a frontend demo: it does not connect to a bank, provide real account authentication, or call an AI service.
 
-Managing personal finances is challenging for many students and working professionals. Most existing expense tracker applications only allow users to manually record transactions and display basic reports. They do not provide personalized financial guidance, predict future spending, detect unnecessary subscriptions, or help users make informed financial decisions. As a result, users often struggle with budgeting, overspending, missed bill payments, and understanding their overall financial health.
+## Features
 
-This project aims to develop **FinTrack AI**, an intelligent personal finance management platform built with React and CSS. The dashboard includes:
+- **Expense tracking:** Add income and expenses by category and date. Transactions are stored in browser `localStorage`.
+- **Dashboard:** Review recorded income, expenses, balances, category totals, and recent transactions.
+- **Budget view:** See a simple spending total and category breakdown derived from recorded transactions. This is not a forecast or a configurable budget-alert system.
+- **Financial insights:** The coach uses local JavaScript rules and transaction data; it is not an AI model or professional financial advice.
+- **Activity calendar:** View transaction activity by date and log expenses from the selected day.
+- **Smart commands:** Type supported commands to open dashboard sections or prepare an expense for confirmation. Commands are parsed locally and do not use a language model.
+- **Languages:** English, Hindi, and Punjabi are available for the interface. Some less-used screens or content may remain in English.
+- **Themes:** Switch between light and dark appearance.
 
-- **Receipt Scanning**: Quick upload and scanning for instant expense logging
-- **Budget Prediction**: Forecasting expected monthly spending
-- **AI Spending Analysis & Insights**: Real-time tips and alerts on spending patterns
-- **Monthly Financial Health Score**: Visual score gauge and progress breakdown
-- **Subscription Detection**: Highlight unused or recurring subscriptions
-- **Investment Suggestions**: Personalized portfolio ideas based on risk profile
-- **Bill Reminders**: Track upcoming utility and rent dues
-- **Voice Assistant**: Interface to ask natural language questions about finances
+## Demo-only features and limitations
 
----
+- **Authentication:** Sign-in and account creation are client-side demo flows; there is no user account service or password verification.
+- **Receipt scanner:** Uploading a receipt shows a preview and a simulated scan with editable example values. There is no OCR or automatic receipt extraction.
+- **Sample data:** A first visit may start with example transactions. After transactions are edited or deleted, the saved browser data is used. Data is local to that browser and is not synchronized across devices.
+- **Bills, subscriptions, and investment suggestions:** Some of these views use sample/demo content and should not be treated as personalized financial guidance.
+- **Security and privacy:** The app does not provide bank-grade security, bank connections, or server-side storage. Avoid entering sensitive financial credentials.
 
-## Tech Stack
+## Tech stack
 
-- **React.js** (Standard JSX & React Components)
-- **Vanilla CSS** (Dark finance theme, responsive grid layout)
-- **Vite** (Fast dev server and build tool)
+- React with JavaScript
+- Vite
+- CSS
+- React Context API for shared application state
+- Browser `localStorage` for local preferences and transaction persistence
 
----
+No backend or external AI/OCR service is required.
 
-## Getting Started
+## Run locally
 
-1. Install dependencies:
-   ```sh
-   npm install
-   ```
+Install dependencies:
 
-2. Start the development server:
-   ```sh
-   npm run dev
-   ```
+```sh
+npm install
+```
 
-3. Build for production:
-   ```sh
-   npm run build
-   ```
+Start the development server:
 
+```sh
+npm run dev
+```
 
-   Feature	How to implement in React
-Expense tracking	Controlled forms + useState
-Persistent transactions	localStorage + useEffect
-Budget management	Progress bars + derived calculations
-Financial health score	JavaScript calculation + visual gauge
-Budget prediction	Simple calculations using past expenses
-AI-style financial coach	Rule-based insights using transaction data
-Receipt scanner UI	File upload + preview; simulate scanning
-Subscription detection	Detect recurring transactions in sample data
-Savings goals	Forms, progress bars and goal calculations
-Smart alerts	Conditional rendering based on spending limits
-Search and filters	Search input, category and date filters
-Voice expense entry	Browser Speech Recognition API, if supported
+Create a production build:
 
+```sh
+npm run build
+```
