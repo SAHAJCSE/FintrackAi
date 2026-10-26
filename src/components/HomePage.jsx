@@ -105,6 +105,33 @@ function HomePage(props) {
         <nav className="landing-nav-links" aria-label="Main navigation">
           <button type="button" onClick={scrollToTop}>{t('Home')}</button>
           <button type="button" onClick={onNavigateToDashboard}>{t('Dashboard')}</button>
+          <button
+            type="button"
+            onClick={() => {
+              if (!finance.isLoggedIn) finance.navigateTo('login', '/login');
+              else finance.navigateTo('river', '/money-river');
+            }}
+          >
+            {t('Money River')}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (!finance.isLoggedIn) finance.navigateTo('login', '/login');
+              else finance.navigateTo('jars', '/jars');
+            }}
+          >
+            {t('Money Jars')}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (!finance.isLoggedIn) finance.navigateTo('login', '/login');
+              else finance.navigateTo('split', '/split');
+            }}
+          >
+            {t('Split Bills')}
+          </button>
         </nav>
         <div className="landing-nav-actions">
           <LanguageSelector className="home-language-selector" />

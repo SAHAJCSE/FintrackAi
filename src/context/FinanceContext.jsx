@@ -7,6 +7,40 @@ export const STORAGE_KEY_THEME = 'fintrack_theme';
 export const STORAGE_KEY_BUDGETS = 'fintrack_budgets';
 export const STORAGE_KEY_USERS = 'fintrack_users';
 export const STORAGE_KEY_CURRENT_USER = 'fintrack_current_user';
+export const STORAGE_KEY_JARS = 'fintrack-pro-jars';
+export const STORAGE_KEY_SPLIT = 'fintrack-pro-split';
+
+export const starterJars = [
+  { id: 'jar-emergency', name: 'Emergency fund', emoji: '🛡️', target: 50000, saved: 12500, color: '#34d399' },
+  { id: 'jar-travel', name: 'Dream trip', emoji: '✈️', target: 30000, saved: 8400, color: '#60a5fa' },
+  { id: 'jar-gadget', name: 'New gadget', emoji: '💻', target: 60000, saved: 18000, color: '#fbbf24' },
+];
+
+export const seedSplitGroups = [
+  { id: 'group-flat', name: 'Flatmates', emoji: '🏠', members: ['You', 'Priya', 'Arjun'], expenses: [
+    { id: 'e1', title: 'Groceries', amount: 1800, paidBy: 'You', splitAmong: ['You', 'Priya', 'Arjun'], date: '2026-10-20' },
+    { id: 'e2', title: 'Wi-Fi bill', amount: 1200, paidBy: 'Priya', splitAmong: ['You', 'Priya', 'Arjun'], date: '2026-10-21' },
+  ]},
+  { id: 'group-trip', name: 'Weekend trip', emoji: '🏖️', members: ['You', 'Kabir', 'Neha'], expenses: [] },
+];
+
+function getInitialJars() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_JARS);
+    return saved ? JSON.parse(saved) : starterJars;
+  } catch {
+    return starterJars;
+  }
+}
+
+function getInitialSplitGroups() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_SPLIT);
+    return saved ? JSON.parse(saved) : seedSplitGroups;
+  } catch {
+    return seedSplitGroups;
+  }
+}
 
 // Default registered user (for demo and initial testing)
 export const defaultUsers = [
@@ -189,6 +223,64 @@ export function FinanceProvider({ children }) {
     }
   }, [categoryBudgets]);
 
+  // Jars (Savings Goals) State (Synced with localStorage and storage events)
+  const [jars, setJars] = useState(getInitialJars);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_JARS, JSON.stringify(jars));
+    } catch (error) {
+      console.error('Failed to save jars to localStorage:', error);
+    }
+  }, [jars]);
+
+  // Real-time synchronization across window storage events
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === STORAGE_KEY_JARS && e.newValue) {
+        try {
+          const updatedJars = JSON.parse(e.newValue);
+          if (Array.isArray(updatedJars)) {
+            setJars(updatedJars);
+          }
+        } catch {
+          // ignore
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Split (Shared Expenses) State (Synced with localStorage and storage events)
+  const [splitGroups, setSplitGroups] = useState(getInitialSplitGroups);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_SPLIT, JSON.stringify(splitGroups));
+    } catch (error) {
+      console.error('Failed to save split groups to localStorage:', error);
+    }
+  }, [splitGroups]);
+
+  // Real-time synchronization across window storage events for split groups
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === STORAGE_KEY_SPLIT && e.newValue) {
+        try {
+          const updated = JSON.parse(e.newValue);
+          if (Array.isArray(updated)) {
+            setSplitGroups(updated);
+          }
+        } catch {
+          // ignore
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   // 3. User Accounts and Authentication State (LocalStorage backed)
   const [users, setUsers] = useState(getInitialUsers);
   const [currentUser, setCurrentUser] = useState(getInitialCurrentUser);
@@ -276,6 +368,14 @@ export function FinanceProvider({ children }) {
         setActivePage('budget');
       } else if (path === '/no-spend' || path === '/nospend' || path === '/calendar' || path === '/activity-calendar') {
         setActivePage('nospend');
+      } else if (path === '/money-river' || path === '/river') {
+        setActivePage('river');
+      } else if (path === '/jars' || path === '/money-jars') {
+        setActivePage('jars');
+      } else if (path === '/split' || path === '/split-bill' || path === '/split-bills') {
+        setActivePage('split');
+      } else if (path === '/instant-add' || path === '/instant' || path === '/instant-bar') {
+        setActivePage('instant-add');
       } else if (path === '/shortcuts' || path === '/keyboard-shortcuts') {
         setActivePage('shortcuts');
       } else if (path === '/dashboard') {
@@ -548,6 +648,68 @@ export function FinanceProvider({ children }) {
     setDeletedSubscriptions((prev) => new Set([...prev, name]));
   }, []);
 
+  // Jars Action Handlers (Live synced with transactions & state)
+  const updateJar = useCallback((id, newSaved, options = {}) => {
+    setJars((prev) => {
+      const jar = prev.find((j) => j.id === id);
+      if (!jar) return prev;
+      const prevSaved = Number(jar.saved) || 0;
+      const updatedSaved = Math.max(0, Number(newSaved) || 0);
+      const delta = updatedSaved - prevSaved;
+
+      if (delta !== 0 && options.logTransaction !== false) {
+        addTransaction({
+          merchant: delta > 0 ? `Jar Deposit: ${jar.name}` : `Jar Withdrawal: ${jar.name}`,
+          amount: -delta,
+          category: 'Savings',
+          date: new Date().toISOString().split('T')[0],
+        });
+      }
+
+      return prev.map((j) => (j.id === id ? { ...j, saved: updatedSaved } : j));
+    });
+  }, [addTransaction]);
+
+  const depositToJar = useCallback((id, amount) => {
+    setJars((prev) => {
+      const jar = prev.find((j) => j.id === id);
+      if (!jar || !amount) return prev;
+      const num = Number(amount) || 0;
+      const updatedSaved = Math.max(0, (Number(jar.saved) || 0) + num);
+
+      addTransaction({
+        merchant: num > 0 ? `Jar Deposit: ${jar.name}` : `Jar Withdrawal: ${jar.name}`,
+        amount: -num,
+        category: 'Savings',
+        date: new Date().toISOString().split('T')[0],
+      });
+
+      return prev.map((j) => (j.id === id ? { ...j, saved: updatedSaved } : j));
+    });
+  }, [addTransaction]);
+
+  const addJar = useCallback((newJar) => {
+    setJars((prev) => {
+      const COLORS = ['#34d399', '#60a5fa', '#fbbf24', '#f472b6', '#a78bfa', '#fb923c'];
+      const created = {
+        id: newJar.id || `jar-${Date.now()}`,
+        name: newJar.name ? String(newJar.name).trim() : 'Goal',
+        emoji: newJar.emoji || '🎯',
+        target: Number(newJar.target) || 0,
+        saved: Number(newJar.saved) || 0,
+        color: newJar.color || COLORS[prev.length % COLORS.length],
+      };
+      return [...prev, created];
+    });
+  }, []);
+
+  const deleteJar = useCallback((id) => {
+    setJars((prev) => prev.filter((j) => j.id !== id));
+  }, []);
+
+  const totalJarsSaved = useMemo(() => jars.reduce((sum, j) => sum + (Number(j.saved) || 0), 0), [jars]);
+  const totalJarsTarget = useMemo(() => jars.reduce((sum, j) => sum + (Number(j.target) || 0), 0), [jars]);
+
   const toggleTheme = useCallback(() => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   }, []);
@@ -811,6 +973,20 @@ export function FinanceProvider({ children }) {
     language,
     setLanguage,
 
+    // Jars & Savings Goals
+    jars,
+    setJars,
+    updateJar,
+    depositToJar,
+    addJar,
+    deleteJar,
+    totalJarsSaved,
+    totalJarsTarget,
+
+    // Split & Shared Expenses
+    splitGroups,
+    setSplitGroups,
+
     // Navigation & UI state & actions
     activePage,
     setActivePage,
@@ -848,6 +1024,14 @@ export function FinanceProvider({ children }) {
     markBillPaid,
     removeBill,
     removeSubscription,
+    jars,
+    updateJar,
+    depositToJar,
+    addJar,
+    deleteJar,
+    totalJarsSaved,
+    totalJarsTarget,
+    splitGroups,
     currentUser,
     users,
     isLoggedIn,

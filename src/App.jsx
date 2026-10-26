@@ -15,6 +15,9 @@ import ReceiptScanner from './components/ReceiptScanner';
 import SpendingCard from './components/SpendingCard';
 import NoSpendHeatmap from './components/NoSpendHeatmap';
 import VoiceFinancePage from './components/VoiceFinancePage';
+import MoneyRiver from './components/MoneyRiver';
+import Jars from './components/Jars';
+import Split from './components/Split';
 import ShortcutsModal from './components/ShortcutsModal';
 import ShortcutsPage from './components/ShortcutsPage';
 import { formatCurrency } from './utils/finance';
@@ -121,7 +124,7 @@ function App() {
 
       // If not logged in, any internal tab shortcut routes to login
       if (!isLoggedIn) {
-        if (isCombo && (isKey('d') || isKey('s') || isKey('h') || isKey('b') || isKey('a') || isKey('c') || isKey('v'))) {
+        if (isCombo && (isKey('d') || isKey('s') || isKey('h') || isKey('b') || isKey('a') || isKey('c') || isKey('v') || isKey('m') || isKey('j') || isKey('p'))) {
           event.preventDefault();
           navigateTo('login', '/login');
         }
@@ -184,8 +187,32 @@ function App() {
         return;
       }
 
-      // Tab 8: Shortcuts Directory (Ctrl+Alt+K, Alt+8)
-      if ((isCombo && isKey('k')) || (isAlt && (key === '8' || code === 'Digit8'))) {
+      // Tab 8: Money River (Ctrl+Alt+M, Alt+M, Alt+8)
+      if ((isCombo && isKey('m')) || (isAlt && (key === '8' || code === 'Digit8'))) {
+        event.preventDefault();
+        navigateTo('river', '/money-river');
+        closeShortcutsModal();
+        return;
+      }
+
+      // Tab: Money Jars (Ctrl+Alt+J, Alt+J)
+      if (isCombo && isKey('j')) {
+        event.preventDefault();
+        navigateTo('jars', '/jars');
+        closeShortcutsModal();
+        return;
+      }
+
+      // Tab: Split Bills (Ctrl+Alt+P, Alt+P)
+      if (isCombo && isKey('p')) {
+        event.preventDefault();
+        navigateTo('split', '/split');
+        closeShortcutsModal();
+        return;
+      }
+
+      // Tab 9: Shortcuts Directory (Ctrl+Alt+K, Alt+9)
+      if ((isCombo && isKey('k')) || (isAlt && (key === '9' || code === 'Digit9'))) {
         event.preventDefault();
         navigateTo('shortcuts', '/shortcuts');
         closeShortcutsModal();
@@ -321,6 +348,9 @@ function App() {
     onAiCoachClick: () => navigateTo('aicoach', '/ai-coach'),
     onReceiptScannerClick: () => navigateTo('scanner', '/receipt-scanner'),
     onNoSpendClick: () => navigateTo('nospend', '/no-spend'),
+    onMoneyRiverClick: () => navigateTo('river', '/money-river'),
+    onJarsClick: () => navigateTo('jars', '/jars'),
+    onSplitClick: () => navigateTo('split', '/split'),
     onVoiceFinanceClick: () => navigateTo('voice', '/voice-finance'),
     onLogout: logout,
   };
@@ -487,6 +517,102 @@ function App() {
             transactions={transactions}
             onAddExpense={addTransaction}
           />
+        </main>
+      </div>
+    );
+  }
+
+  // Dedicated Money River (Sankey Flow) page
+  if (activePage === 'river') {
+    return (
+      <div className="money-river-page-wrapper">
+        {isSidebarOpenMobile && (
+          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
+        )}
+        <Sidebar {...sidebarProps} />
+        <main className="money-river-main">
+          <div className="view-header-bar">
+            <button
+              type="button"
+              className="sidebar-toggle-btn"
+              onClick={toggleSidebar}
+              title="Toggle Sidebar Menu"
+            >
+              ☰
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => navigateTo('dashboard', '/dashboard')}
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+          <MoneyRiver transactions={transactions} />
+        </main>
+      </div>
+    );
+  }
+
+  // Dedicated Money Jars (Savings Goals) page
+  if (activePage === 'jars') {
+    return (
+      <div className="jars-page-wrapper">
+        {isSidebarOpenMobile && (
+          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
+        )}
+        <Sidebar {...sidebarProps} />
+        <main className="jars-main">
+          <div className="view-header-bar">
+            <button
+              type="button"
+              className="sidebar-toggle-btn"
+              onClick={toggleSidebar}
+              title="Toggle Sidebar Menu"
+            >
+              ☰
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => navigateTo('dashboard', '/dashboard')}
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+          <Jars />
+        </main>
+      </div>
+    );
+  }
+
+  // Dedicated Split (Shared Bills) page
+  if (activePage === 'split') {
+    return (
+      <div className="split-page-wrapper">
+        {isSidebarOpenMobile && (
+          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
+        )}
+        <Sidebar {...sidebarProps} />
+        <main className="split-main">
+          <div className="view-header-bar">
+            <button
+              type="button"
+              className="sidebar-toggle-btn"
+              onClick={toggleSidebar}
+              title="Toggle Sidebar Menu"
+            >
+              ☰
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => navigateTo('dashboard', '/dashboard')}
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+          <Split />
         </main>
       </div>
     );
