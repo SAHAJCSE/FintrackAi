@@ -3,7 +3,7 @@ import { useFinance } from '../context/FinanceContext';
 import { translate } from '../utils/i18n';
 
 function VoiceFinancePage({ onBackToDashboard, onToggleSidebar }) {
-  const { language } = useFinance();
+  const { language, openShortcutsModal } = useFinance();
   const t = (text) => translate(text, language);
 
   return (
@@ -20,6 +20,16 @@ function VoiceFinancePage({ onBackToDashboard, onToggleSidebar }) {
         </button>
         <button type="button" className="btn-primary" onClick={onBackToDashboard}>
           {t('Back to Dashboard')}
+        </button>
+        <button
+          type="button"
+          className="btn-secondary scanner-shortcut shortcuts-showcase-btn"
+          onClick={openShortcutsModal}
+          title={t('Showcase all keyboard shortcuts (? or Ctrl+K)')}
+        >
+          <span className="shortcuts-btn-icon" aria-hidden="true">⌨️</span>
+          <span>{t('Shortcuts')}</span>
+          <kbd>Ctrl+Alt+V</kbd>
         </button>
       </div>
 

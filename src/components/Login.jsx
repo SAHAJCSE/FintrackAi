@@ -30,23 +30,33 @@ function Login({ onLogin, onNavigateToCreateAccount, onBackToHome }) {
     setError('');
 
     const cleanEmail = email.trim();
+    const cleanPassword = password.trim();
 
     if (!cleanEmail) {
-      setError('Please enter your email address.');
+      setError(t('Please enter your email address.'));
       return;
     }
 
     if (!validateEmail(cleanEmail)) {
-      setError('Please enter a valid email address (e.g. name@domain.com).');
+      setError(t('Please enter a valid email address (e.g. name@domain.com).'));
       return;
     }
 
-    // Fast demo login after email authentication validation
+    if (!cleanPassword) {
+      setError(t('Please enter your password.'));
+      return;
+    }
+
     setLoading(true);
     setTimeout(() => {
+      const result = finance.login({ email: cleanEmail, password: cleanPassword });
       setLoading(false);
-      handleLogin();
-    }, 400);
+      if (!result.success) {
+        setError(t(result.error));
+      } else if (onLogin) {
+        onLogin(result.user);
+      }
+    }, 250);
   };
 
   return (
@@ -206,11 +216,17 @@ function Login({ onLogin, onNavigateToCreateAccount, onBackToHome }) {
                 onClick={() => {
                   setEmail('rohan@example.com');
                   setPassword('password123');
+                  setError('');
                   setLoading(true);
                   setTimeout(() => {
+                    const result = finance.login({ email: 'rohan@example.com', password: 'password123' });
                     setLoading(false);
-                    handleLogin();
-                  }, 300);
+                    if (!result.success) {
+                      setError(t(result.error));
+                    } else if (onLogin) {
+                      onLogin(result.user);
+                    }
+                  }, 200);
                 }}
                 style={{
                   width: '100%',
@@ -231,7 +247,7 @@ function Login({ onLogin, onNavigateToCreateAccount, onBackToHome }) {
                   gap: '6px',
                 }}
               >
-                Quick Demo Sign In
+                ⚡ {t('Quick Demo Sign In (Rohan)')}
               </button>
             </form>
 

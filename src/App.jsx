@@ -15,6 +15,8 @@ import ReceiptScanner from './components/ReceiptScanner';
 import SpendingCard from './components/SpendingCard';
 import NoSpendHeatmap from './components/NoSpendHeatmap';
 import VoiceFinancePage from './components/VoiceFinancePage';
+import ShortcutsModal from './components/ShortcutsModal';
+import ShortcutsPage from './components/ShortcutsPage';
 import { formatCurrency } from './utils/finance';
 import { translate } from './utils/i18n';
 
@@ -35,6 +37,7 @@ function App() {
     removeBill,
     removeSubscription,
 
+    currentUser,
     isLoggedIn,
     setIsLoggedIn,
     isRegistering,
@@ -59,24 +62,182 @@ function App() {
     setAddExpenseDefaultCategory,
     openAddExpense,
     closeAddExpense,
+    isShortcutsModalOpen,
+    openShortcutsModal,
+    closeShortcutsModal,
   } = useFinance();
   const t = (text) => translate(text, language);
 
+  // Global Keyboard Shortcuts (working across all tabs and views)
   useEffect(() => {
-    const handleShortcut = (event) => {
+    const handleKeyDown = (event) => {
       const target = event.target;
       const isTyping = target instanceof HTMLElement
         && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
-      const isScannerShortcut = event.key.toLowerCase() === 's'
-        && (event.ctrlKey && event.altKey || event.metaKey && event.altKey);
 
-      if (!isScannerShortcut || !isLoggedIn || isTyping) return;
-      event.preventDefault();
-      navigateTo('scanner', '/receipt-scanner');
+      // Dismiss modals with Escape even if typing
+      if (event.key === 'Escape') {
+        if (isShortcutsModalOpen) {
+          closeShortcutsModal();
+          return;
+        }
+        if (isAddExpenseOpen) {
+          closeAddExpense();
+          return;
+        }
+      }
+
+      if (isTyping) return;
+
+      const key = event.key ? event.key.toLowerCase() : '';
+      const code = event.code || '';
+      const isCtrl = event.ctrlKey || event.metaKey;
+      const isAlt = event.altKey;
+      const isShift = event.shiftKey;
+
+      // 1. Showcase all shortcuts on dedicated Shortcuts page: '?' (Shift+/) or Ctrl+K or Ctrl+/
+      if (
+        (key === '?' || (isShift && (key === '/' || code === 'Slash'))) ||
+        (isCtrl && (key === 'k' || code === 'KeyK')) ||
+        (isCtrl && (key === '/' || code === 'Slash'))
+      ) {
+        event.preventDefault();
+        if (activePage === 'shortcuts') {
+          navigateTo('dashboard', '/dashboard');
+        } else {
+          navigateTo('shortcuts', '/shortcuts');
+        }
+        return;
+      }
+
+      const isKey = (letter, keyName) => (
+        key === letter.toLowerCase() ||
+        code === `Key${letter.toUpperCase()}` ||
+        code === keyName
+      );
+
+      // Modifier combo for tab switching: (Ctrl+Alt) OR (Alt alone) OR (Ctrl+Shift)
+      const isCombo = (isCtrl && isAlt) || (isAlt && !isCtrl) || (isCtrl && isShift);
+
+      // If not logged in, any internal tab shortcut routes to login
+      if (!isLoggedIn) {
+        if (isCombo && (isKey('d') || isKey('s') || isKey('h') || isKey('b') || isKey('a') || isKey('c') || isKey('v'))) {
+          event.preventDefault();
+          navigateTo('login', '/login');
+        }
+        return;
+      }
+
+      // Tab 1: Dashboard (Ctrl+Alt+D, Alt+D, Alt+1)
+      if ((isCombo && isKey('d')) || (isAlt && (key === '1' || code === 'Digit1'))) {
+        event.preventDefault();
+        navigateTo('dashboard', '/dashboard');
+        closeShortcutsModal();
+        return;
+      }
+
+      // Tab 2: Receipt Scanner (Ctrl+Alt+S, Alt+S, Alt+2)
+      if ((isCombo && isKey('s')) || (isAlt && (key === '2' || code === 'Digit2'))) {
+        event.preventDefault();
+        navigateTo('scanner', '/receipt-scanner');
+        closeShortcutsModal();
+        return;
+      }
+
+      // Tab 3: Financial Health (Ctrl+Alt+H, Alt+H, Alt+3)
+      if ((isCombo && isKey('h')) || (isAlt && (key === '3' || code === 'Digit3'))) {
+        event.preventDefault();
+        navigateTo('health', '/health');
+        closeShortcutsModal();
+        return;
+      }
+
+      // Tab 4: Budget Prediction (Ctrl+Alt+B, Alt+B, Alt+4)
+      if ((isCombo && isKey('b')) || (isAlt && (key === '4' || code === 'Digit4'))) {
+        event.preventDefault();
+        navigateTo('budget', '/budget');
+        closeShortcutsModal();
+        return;
+      }
+
+      // Tab 5: AI Financial Coach (Ctrl+Alt+A, Alt+A, Alt+5)
+      if ((isCombo && isKey('a')) || (isAlt && (key === '5' || code === 'Digit5'))) {
+        event.preventDefault();
+        navigateTo('aicoach', '/ai-coach');
+        closeShortcutsModal();
+        return;
+      }
+
+      // Tab 6: Activity Calendar / No-Spend (Ctrl+Alt+C, Alt+C, Alt+6)
+      if ((isCombo && isKey('c')) || (isAlt && (key === '6' || code === 'Digit6'))) {
+        event.preventDefault();
+        navigateTo('nospend', '/no-spend');
+        closeShortcutsModal();
+        return;
+      }
+
+      // Tab 7: Voice Finance (Ctrl+Alt+V, Alt+V, Alt+7)
+      if ((isCombo && isKey('v')) || (isAlt && (key === '7' || code === 'Digit7'))) {
+        event.preventDefault();
+        navigateTo('voice', '/voice-finance');
+        closeShortcutsModal();
+        return;
+      }
+
+      // Tab 8: Shortcuts Directory (Ctrl+Alt+K, Alt+8)
+      if ((isCombo && isKey('k')) || (isAlt && (key === '8' || code === 'Digit8'))) {
+        event.preventDefault();
+        navigateTo('shortcuts', '/shortcuts');
+        closeShortcutsModal();
+        return;
+      }
+
+      // Home / Landing (Ctrl+Alt+0, Alt+0)
+      if (isAlt && (key === '0' || code === 'Digit0')) {
+        event.preventDefault();
+        navigateTo('home', '/');
+        closeShortcutsModal();
+        return;
+      }
+
+      // Action: Add Transaction (Ctrl+Alt+N, Alt+N, Alt+T, Alt++)
+      if ((isCombo && (isKey('n') || isKey('t'))) || (isAlt && key === '+')) {
+        event.preventDefault();
+        openAddExpense('Food');
+        closeShortcutsModal();
+        return;
+      }
+
+      // Action: Toggle Sidebar (Ctrl+B, Alt+M)
+      if ((isCtrl && (key === 'b' || code === 'KeyB')) || (isAlt && isKey('m'))) {
+        event.preventDefault();
+        toggleSidebar();
+        return;
+      }
+
+      // Action: Toggle Theme (Alt+L, Ctrl+Alt+T)
+      if ((isCombo && isKey('l')) || ((isCtrl && isAlt) && isKey('t'))) {
+        event.preventDefault();
+        toggleTheme();
+        return;
+      }
     };
-    window.addEventListener('keydown', handleShortcut);
-    return () => window.removeEventListener('keydown', handleShortcut);
-  }, [isLoggedIn, navigateTo]);
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    activePage,
+    isLoggedIn,
+    navigateTo,
+    isShortcutsModalOpen,
+    isAddExpenseOpen,
+    openAddExpense,
+    closeAddExpense,
+    openShortcutsModal,
+    closeShortcutsModal,
+    toggleSidebar,
+    toggleTheme,
+  ]);
 
   // 1. Dedicated Minimal Animated Home Page (Public Landing - Shown before login)
   if (activePage === 'home') {
@@ -104,10 +265,7 @@ function App() {
             navigateTo('aicoach', '/ai-coach');
           }
         }}
-        onLogout={() => {
-          setIsLoggedIn(false);
-          navigateTo('home', '/');
-        }}
+        onLogout={logout}
         theme={theme}
         onToggleTheme={toggleTheme}
         isLoggedIn={isLoggedIn}
@@ -164,10 +322,7 @@ function App() {
     onReceiptScannerClick: () => navigateTo('scanner', '/receipt-scanner'),
     onNoSpendClick: () => navigateTo('nospend', '/no-spend'),
     onVoiceFinanceClick: () => navigateTo('voice', '/voice-finance'),
-    onLogout: () => {
-      setIsLoggedIn(false);
-      navigateTo('home', '/');
-    },
+    onLogout: logout,
   };
 
   // Dedicated Receipt Scanner page
@@ -337,6 +492,24 @@ function App() {
     );
   }
 
+  // Dedicated Shortcuts Directory page
+  if (activePage === 'shortcuts') {
+    return (
+      <div className="shortcuts-page-wrapper">
+        {isSidebarOpenMobile && (
+          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
+        )}
+        <Sidebar {...sidebarProps} />
+        <main className="shortcuts-page-main">
+          <ShortcutsPage
+            onBackToDashboard={() => navigateTo('dashboard', '/dashboard')}
+            onToggleSidebar={toggleSidebar}
+          />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="dashboard-container">
       {isSidebarOpenMobile && (
@@ -374,12 +547,22 @@ function App() {
               {theme === 'dark' ? 'Light Theme' : 'Dark Theme'}
             </button>
             <div>
-              <h1 className="header-title">{t('Welcome back, Rohan!')}</h1>
+              <h1 className="header-title">
+                {t('Welcome back')}, {currentUser?.name?.split(' ')[0] || 'Rohan'}!
+              </h1>
               <p className="header-subtitle">{t('Your AI financial coach — October overview')}</p>
             </div>
           </div>
 
           <div className="header-actions">
+            <button
+              type="button"
+              className="btn-secondary shortcuts-page-header-btn"
+              onClick={() => navigateTo('shortcuts', '/shortcuts')}
+              title={t('View keyboard shortcuts for every tab')}
+            >
+              ⌨️ {t('Shortcuts')}
+            </button>
             <button
               type="button"
               className="btn-secondary scanner-shortcut"

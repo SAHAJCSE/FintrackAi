@@ -5,6 +5,19 @@ import { calculateFinancialSummary, getCategoryTotals, formatCurrency } from '..
 export const STORAGE_KEY_TRANSACTIONS = 'fintrack_transactions';
 export const STORAGE_KEY_THEME = 'fintrack_theme';
 export const STORAGE_KEY_BUDGETS = 'fintrack_budgets';
+export const STORAGE_KEY_USERS = 'fintrack_users';
+export const STORAGE_KEY_CURRENT_USER = 'fintrack_current_user';
+
+// Default registered user (for demo and initial testing)
+export const defaultUsers = [
+  {
+    id: 'user_demo_1',
+    name: 'Rohan Sharma',
+    email: 'rohan@example.com',
+    password: 'password123',
+    createdAt: '2026-09-01T00:00:00.000Z',
+  },
+];
 
 // AI insights fallback
 export const initialInsights = [
@@ -103,6 +116,42 @@ function getInitialBudgets() {
   }
 }
 
+/**
+ * Safely initialize registered user accounts from localStorage.
+ */
+function getInitialUsers() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_USERS);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+    // Seed default demo user into localStorage
+    localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(defaultUsers));
+    return defaultUsers;
+  } catch {
+    return defaultUsers;
+  }
+}
+
+/**
+ * Safely retrieve active user session from localStorage.
+ */
+function getInitialCurrentUser() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && typeof parsed === 'object' && parsed.email) {
+        return parsed;
+      }
+    }
+  } catch {
+    // fallback to null
+  }
+  return null;
+}
+
 export const FinanceContext = createContext(null);
 
 export function FinanceProvider({ children }) {
@@ -140,9 +189,33 @@ export function FinanceProvider({ children }) {
     }
   }, [categoryBudgets]);
 
-  // 3. Authentication State
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // 3. User Accounts and Authentication State (LocalStorage backed)
+  const [users, setUsers] = useState(getInitialUsers);
+  const [currentUser, setCurrentUser] = useState(getInitialCurrentUser);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => Boolean(getInitialCurrentUser()));
   const [isRegistering, setIsRegistering] = useState(false);
+
+  // Synchronize registered user accounts to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+    } catch (error) {
+      console.error('Failed to save users to localStorage:', error);
+    }
+  }, [users]);
+
+  // Synchronize active user session to localStorage
+  useEffect(() => {
+    try {
+      if (currentUser) {
+        localStorage.setItem(STORAGE_KEY_CURRENT_USER, JSON.stringify(currentUser));
+      } else {
+        localStorage.removeItem(STORAGE_KEY_CURRENT_USER);
+      }
+    } catch (error) {
+      console.error('Failed to sync current user session:', error);
+    }
+  }, [currentUser]);
 
   // 4. UI & Theme State
   const [theme, setTheme] = useState(getInitialTheme);
@@ -159,6 +232,7 @@ export function FinanceProvider({ children }) {
   const [isSidebarOpenMobile, setIsSidebarOpenMobile] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [addExpenseDefaultCategory, setAddExpenseDefaultCategory] = useState('Food');
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
 
   // 5. Bills & Subscriptions Status
   const [paidBills, setPaidBills] = useState(new Set());
@@ -202,6 +276,8 @@ export function FinanceProvider({ children }) {
         setActivePage('budget');
       } else if (path === '/no-spend' || path === '/nospend' || path === '/calendar' || path === '/activity-calendar') {
         setActivePage('nospend');
+      } else if (path === '/shortcuts' || path === '/keyboard-shortcuts') {
+        setActivePage('shortcuts');
       } else if (path === '/dashboard') {
         setActivePage('dashboard');
       } else if (path === '/login') {
@@ -506,14 +582,186 @@ export function FinanceProvider({ children }) {
     setIsAddExpenseOpen(false);
   }, []);
 
-  const login = useCallback(() => {
+  const openShortcutsModal = useCallback(() => {
+    setIsShortcutsModalOpen(true);
+  }, []);
+
+  const closeShortcutsModal = useCallback(() => {
+    setIsShortcutsModalOpen(false);
+  }, []);
+
+  const signup = useCallback((payload) => {
+    if (!payload) return { success: false, error: 'Registration details missing.' };
+
+    const cleanName = (payload.name || payload.fullName || '').trim();
+    const cleanEmail = (payload.email || '').trim().toLowerCase();
+    const cleanPassword = (payload.password || '').trim();
+
+    if (!cleanName) {
+      return { success: false, error: 'Please enter your full name.' };
+    }
+    if (!cleanEmail) {
+      return { success: false, error: 'Please enter your email address.' };
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      return { success: false, error: 'Please enter a valid email address (e.g. name@domain.com).' };
+    }
+
+    if (!cleanPassword || cleanPassword.length < 6) {
+      return { success: false, error: 'Password must be at least 6 characters.' };
+    }
+
+    // Refresh users from localStorage to avoid race conditions
+    let currentUsers = [];
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_USERS);
+      currentUsers = saved ? JSON.parse(saved) : users;
+      if (!Array.isArray(currentUsers)) currentUsers = defaultUsers;
+    } catch {
+      currentUsers = users;
+    }
+
+    const existingUser = currentUsers.find(
+      (u) => (u.email || '').toLowerCase() === cleanEmail
+    );
+
+    if (existingUser) {
+      return {
+        success: false,
+        error: 'An account with this email already exists. Please sign in instead.',
+      };
+    }
+
+    const newUser = {
+      id: `user_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      name: cleanName,
+      email: cleanEmail,
+      password: cleanPassword,
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedUsers = [...currentUsers, newUser];
+    setUsers(updatedUsers);
+    try {
+      localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(updatedUsers));
+    } catch (err) {
+      console.error('Failed to save updated users list:', err);
+    }
+
+    // Safe session without password
+    const sessionUser = {
+      id: newUser.id,
+      name: newUser.name,
+      email: newUser.email,
+      createdAt: newUser.createdAt,
+    };
+
+    setCurrentUser(sessionUser);
     setIsLoggedIn(true);
     setIsRegistering(false);
+    try {
+      localStorage.setItem(STORAGE_KEY_CURRENT_USER, JSON.stringify(sessionUser));
+    } catch (err) {
+      console.error('Failed to save current user session:', err);
+    }
+
     navigateTo('dashboard', '/dashboard');
-  }, [navigateTo]);
+    return { success: true, user: sessionUser };
+  }, [users, navigateTo]);
+
+  const login = useCallback((credentials) => {
+    // If called with no credentials (e.g. legacy Quick Demo button), use demo account
+    if (!credentials || (!credentials.email && !credentials.password)) {
+      const demoAccount = users.find((u) => u.email === 'rohan@example.com') || defaultUsers[0];
+      const sessionUser = {
+        id: demoAccount.id,
+        name: demoAccount.name,
+        email: demoAccount.email,
+        createdAt: demoAccount.createdAt,
+      };
+
+      setCurrentUser(sessionUser);
+      setIsLoggedIn(true);
+      setIsRegistering(false);
+      try {
+        localStorage.setItem(STORAGE_KEY_CURRENT_USER, JSON.stringify(sessionUser));
+      } catch (err) {
+        console.error('Failed to save current user session:', err);
+      }
+
+      navigateTo('dashboard', '/dashboard');
+      return { success: true, user: sessionUser };
+    }
+
+    const cleanEmail = (credentials.email || '').trim().toLowerCase();
+    const cleanPassword = (credentials.password || '').trim();
+
+    if (!cleanEmail) {
+      return { success: false, error: 'Please enter your email address.' };
+    }
+    if (!cleanPassword) {
+      return { success: false, error: 'Please enter your password.' };
+    }
+
+    // Refresh users from localStorage
+    let currentUsers = [];
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_USERS);
+      currentUsers = saved ? JSON.parse(saved) : users;
+      if (!Array.isArray(currentUsers)) currentUsers = defaultUsers;
+    } catch {
+      currentUsers = users;
+    }
+
+    const foundUser = currentUsers.find(
+      (u) => (u.email || '').toLowerCase() === cleanEmail
+    );
+
+    if (!foundUser) {
+      return {
+        success: false,
+        error: 'No account found with this email. Please check your spelling or create an account.',
+      };
+    }
+
+    if (foundUser.password !== cleanPassword) {
+      return {
+        success: false,
+        error: 'Incorrect password. Please try again.',
+      };
+    }
+
+    const sessionUser = {
+      id: foundUser.id,
+      name: foundUser.name,
+      email: foundUser.email,
+      createdAt: foundUser.createdAt,
+    };
+
+    setCurrentUser(sessionUser);
+    setIsLoggedIn(true);
+    setIsRegistering(false);
+    try {
+      localStorage.setItem(STORAGE_KEY_CURRENT_USER, JSON.stringify(sessionUser));
+    } catch (err) {
+      console.error('Failed to save current user session:', err);
+    }
+
+    navigateTo('dashboard', '/dashboard');
+    return { success: true, user: sessionUser };
+  }, [users, navigateTo]);
 
   const logout = useCallback(() => {
+    setCurrentUser(null);
     setIsLoggedIn(false);
+    setIsRegistering(false);
+    try {
+      localStorage.removeItem(STORAGE_KEY_CURRENT_USER);
+    } catch (err) {
+      console.error('Failed to remove current user session:', err);
+    }
     navigateTo('home', '/');
   }, [navigateTo]);
 
@@ -544,11 +792,15 @@ export function FinanceProvider({ children }) {
     removeBill,
     removeSubscription,
 
-    // Auth state & actions
+    // User accounts & Authentication state & actions
+    currentUser,
+    setCurrentUser,
+    users,
     isLoggedIn,
     setIsLoggedIn,
     isRegistering,
     setIsRegistering,
+    signup,
     login,
     logout,
 
@@ -575,6 +827,10 @@ export function FinanceProvider({ children }) {
     setAddExpenseDefaultCategory,
     openAddExpense,
     closeAddExpense,
+    isShortcutsModalOpen,
+    setIsShortcutsModalOpen,
+    openShortcutsModal,
+    closeShortcutsModal,
   }), [
     transactions,
     addTransaction,
@@ -592,8 +848,11 @@ export function FinanceProvider({ children }) {
     markBillPaid,
     removeBill,
     removeSubscription,
+    currentUser,
+    users,
     isLoggedIn,
     isRegistering,
+    signup,
     login,
     logout,
     theme,
@@ -610,6 +869,9 @@ export function FinanceProvider({ children }) {
     addExpenseDefaultCategory,
     openAddExpense,
     closeAddExpense,
+    isShortcutsModalOpen,
+    openShortcutsModal,
+    closeShortcutsModal,
   ]);
 
   return (

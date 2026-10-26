@@ -602,3 +602,46 @@
 body.theme-light .login-root {
   --login-border: rgba(15, 23, 42, 0.14);
 }
+
+/* Authentication Error & Success Alerts */
+.form-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  animation: fadeIn 0.18s ease-out;
+}
+
+body.theme-light .form-error {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.form-error svg {
+  flex-shrink: 0;
+  stroke: currentColor;
+}
+
+.form-success {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #10b981;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  animation: fadeIn 0.18s ease-out;
+}
+

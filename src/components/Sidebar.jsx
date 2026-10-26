@@ -124,6 +124,18 @@ function Sidebar(props) {
 
         <LanguageSelector className="sidebar-language-selector" />
 
+        {finance.currentUser && (
+          <div className="sidebar-user-badge" title={finance.currentUser.email}>
+            <div className="sidebar-user-avatar">
+              {finance.currentUser.name ? finance.currentUser.name.charAt(0).toUpperCase() : 'U'}
+            </div>
+            <div className="sidebar-user-details">
+              <span className="sidebar-user-name">{finance.currentUser.name}</span>
+              <span className="sidebar-user-email">{finance.currentUser.email}</span>
+            </div>
+          </div>
+        )}
+
         {onLogout && (
           <button
             type="button"
@@ -135,7 +147,7 @@ function Sidebar(props) {
             <svg className="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M10 17l5-5-5-5m5 5H3" /><path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7" />
             </svg>
-            <span>{t('Logout')}</span>
+            <span className="nav-label">{t('Logout')}</span>
           </button>
         )}
       </nav>

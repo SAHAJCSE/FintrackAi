@@ -30,28 +30,44 @@ function CreateAccount({ onLogin, onBackToLogin, onBackToHome }) {
     e.preventDefault();
     setError('');
 
-    if (!fullName.trim()) {
-      setError('Please enter your full name.');
+    const cleanName = fullName.trim();
+    const cleanEmail = email.trim();
+    const cleanPassword = password.trim();
+
+    if (!cleanName) {
+      setError(t('Please enter your full name.'));
       return;
     }
 
-    const cleanEmail = email.trim();
     if (!cleanEmail) {
-      setError('Please enter your email address.');
+      setError(t('Please enter your email address.'));
       return;
     }
 
     if (!validateEmail(cleanEmail)) {
-      setError('Please enter a valid email address (e.g. name@domain.com).');
+      setError(t('Please enter a valid email address (e.g. name@domain.com).'));
       return;
     }
 
-    // Fast demo registration
+    if (!cleanPassword || cleanPassword.length < 6) {
+      setError(t('Password must be at least 6 characters.'));
+      return;
+    }
+
     setLoading(true);
     setTimeout(() => {
+      const result = finance.signup({
+        name: cleanName,
+        email: cleanEmail,
+        password: cleanPassword,
+      });
       setLoading(false);
-      handleLogin();
-    }, 400);
+      if (!result.success) {
+        setError(t(result.error));
+      } else if (onLogin) {
+        onLogin(result.user);
+      }
+    }, 300);
   };
 
   return (

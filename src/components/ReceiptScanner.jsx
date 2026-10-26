@@ -289,6 +289,16 @@ function ReceiptScanner({ onBackToDashboard, onAddExpense, onToggleSidebar }) {
             ← Back to Dashboard
           </button>
         )}
+        <button
+          type="button"
+          className="btn-secondary scanner-shortcut shortcuts-showcase-btn"
+          onClick={finance.openShortcutsModal}
+          title="Showcase all keyboard shortcuts (? or Ctrl+K)"
+        >
+          <span className="shortcuts-btn-icon" aria-hidden="true">⌨️</span>
+          <span>Shortcuts</span>
+          <kbd>Ctrl+Alt+S</kbd>
+        </button>
       </div>
 
       {/* Page Header */}
