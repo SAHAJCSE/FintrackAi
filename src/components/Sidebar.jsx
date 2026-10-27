@@ -6,6 +6,7 @@ import { translate } from '../utils/i18n';
 const navItems = [
   { label: 'Home', title: 'Go to home', page: 'home', icon: 'home', action: 'onHomeClick' },
   { label: 'Dashboard', title: 'View your financial dashboard', page: 'dashboard', icon: 'grid', action: 'onDashboardClick' },
+  { label: 'Transactions', title: 'View and manage all transactions', page: 'transactions', icon: 'transactions', action: 'onTransactionsClick' },
   { label: 'Health', title: 'View financial health', page: 'health', icon: 'heart', action: 'onHealthClick' },
   { label: 'Budget', title: 'View budget prediction', page: 'budget', icon: 'chart', action: 'onBudgetClick' },
   { label: 'AI Coach', title: 'Open AI Coach', page: 'aicoach', icon: 'spark', action: 'onAiCoachClick' },
@@ -23,6 +24,7 @@ function NavIcon({ name }) {
   const paths = {
     home: <><path d="m3 10 9-7 9 7" /><path d="M5 9v11h14V9M9 20v-6h6v6" /></>,
     grid: <><rect x="3" y="3" width="8" height="8" rx="1.5" /><rect x="13" y="3" width="8" height="8" rx="1.5" /><rect x="3" y="13" width="8" height="8" rx="1.5" /><rect x="13" y="13" width="8" height="8" rx="1.5" /></>,
+    transactions: <><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" /></>,
     heart: <path d="M20.8 8.8c0 5.2-8.8 11-8.8 11s-8.8-5.8-8.8-11A4.8 4.8 0 0 1 12 6.2a4.8 4.8 0 0 1 8.8 2.6Z" />,
     chart: <><path d="M4 19V5M4 19h17" /><path d="m7 15 4-4 3 2 5-6" /></>,
     spark: <><path d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z" /><path d="m19 14 .9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9L19 14Z" /></>,
@@ -64,6 +66,7 @@ function Sidebar(props) {
   const onToggleTheme = props.onToggleTheme || finance.toggleTheme;
   const onHomeClick = props.onHomeClick || (() => finance.navigateTo('home', '/'));
   const onDashboardClick = props.onDashboardClick || (() => finance.navigateTo('dashboard', '/dashboard'));
+  const onTransactionsClick = props.onTransactionsClick || (() => finance.navigateTo('transactions', '/transactions'));
   const onHealthClick = props.onHealthClick || (() => finance.navigateTo('health', '/health'));
   const onBudgetClick = props.onBudgetClick || (() => finance.navigateTo('budget', '/budget'));
   const onAiCoachClick = props.onAiCoachClick || (() => finance.navigateTo('aicoach', '/ai-coach'));
@@ -85,6 +88,7 @@ function Sidebar(props) {
   const actions = {
     onHomeClick,
     onDashboardClick,
+    onTransactionsClick,
     onHealthClick,
     onBudgetClick,
     onAiCoachClick,
@@ -122,7 +126,9 @@ function Sidebar(props) {
 
       <nav className="sidebar-nav">
         {navItems.map((item) => {
-          const isActive = item.page === 'nospend'
+          const isActive = item.page === 'transactions'
+            ? ['transactions', 'transaction', 'all-transactions'].includes(activePage)
+            : item.page === 'nospend'
             ? ['nospend', 'no-spend', 'calendar'].includes(activePage)
             : item.page === 'river'
             ? ['river', 'money-river'].includes(activePage)

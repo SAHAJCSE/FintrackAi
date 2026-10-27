@@ -2,6 +2,7 @@ const translations = {
   hi: {
     'Home': 'होम',
     'Dashboard': 'डैशबोर्ड',
+    'Transactions': 'लेन-देन',
     'Health': 'वित्तीय स्थिति',
     'Budget': 'बजट',
     'AI Coach': 'एआई सलाहकार',
@@ -14,6 +15,7 @@ const translations = {
     'Instant Add': 'त्वरित लेन-देन जोड़ें',
     'Go to home': 'होम पर जाएँ',
     'View your financial dashboard': 'वित्तीय डैशबोर्ड देखें',
+    'View and manage all transactions': 'सभी लेन-देन देखें और प्रबंधित करें',
     'View financial health': 'वित्तीय स्थिति देखें',
     'View budget prediction': 'बजट पूर्वानुमान देखें',
     'Open AI Coach': 'एआई सलाहकार खोलें',
@@ -224,6 +226,7 @@ const translations = {
   pa: {
     'Home': 'ਘਰ',
     'Dashboard': 'ਡੈਸ਼ਬੋਰਡ',
+    'Transactions': 'ਲੈਣ-ਦੇਣ',
     'Health': 'ਵਿੱਤੀ ਸਿਹਤ',
     'Budget': 'ਬਜਟ',
     'AI Coach': 'ਏਆਈ ਸਲਾਹਕਾਰ',
@@ -236,6 +239,7 @@ const translations = {
     'Instant Add': 'ਤੁਰੰਤ ਲੈਣ-ਦੇਣ ਸ਼ਾਮਲ ਕਰੋ',
     'Go to home': 'ਘਰ ਜਾਓ',
     'View your financial dashboard': 'ਵਿੱਤੀ ਡੈਸ਼ਬੋਰਡ ਵੇਖੋ',
+    'View and manage all transactions': 'ਸਾਰੇ ਲੈਣ-ਦੇਣ ਵੇਖੋ ਅਤੇ ਪ੍ਰਬੰਧਿਤ ਕਰੋ',
     'View financial health': 'ਵਿੱਤੀ ਸਿਹਤ ਵੇਖੋ',
     'View budget prediction': 'ਬਜਟ ਅਨੁਮਾਨ ਵੇਖੋ',
     'Open AI Coach': 'ਏਆਈ ਸਲਾਹਕਾਰ ਖੋਲ੍ਹੋ',

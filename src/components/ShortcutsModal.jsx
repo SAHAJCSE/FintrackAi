@@ -17,6 +17,16 @@ export const SHORTCUTS_DATA = [
         icon: '📊',
       },
       {
+        id: 'transactions',
+        name: 'Transactions',
+        description: 'View, search, filter, edit, and delete all transactions',
+        primary: ['Ctrl', 'Alt', 'T'],
+        alt: ['Alt', 'T'],
+        page: 'transactions',
+        path: '/transactions',
+        icon: '💳',
+      },
+      {
         id: 'scanner',
         name: 'Receipt Scanner',
         description: 'Extract and log expenses directly from receipt photos',

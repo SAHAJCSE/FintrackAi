@@ -75,7 +75,6 @@ export const starterSubscriptions = [
     lastUsed: '40 days ago',
     plan: 'Super (with Ads)',
     paymentMethod: 'Debit Card (SBI)',
-    icon: '⭐',
     color: '#0c2045',
   },
   {
@@ -90,7 +89,6 @@ export const starterSubscriptions = [
     lastUsed: 'Yesterday',
     plan: 'Cult Elite Pass',
     paymentMethod: 'Credit Card (ICICI)',
-    icon: '🏋️',
     color: '#ff3278',
   },
   {
@@ -105,7 +103,6 @@ export const starterSubscriptions = [
     lastUsed: '3 hours ago',
     plan: 'Individual Premium',
     paymentMethod: 'Paytm UPI',
-    icon: '🎵',
     color: '#1db954',
   },
   {
@@ -120,7 +117,6 @@ export const starterSubscriptions = [
     lastUsed: 'Continuous',
     plan: 'Basic 100GB',
     paymentMethod: 'Google Play Balance',
-    icon: '☁️',
     color: '#4285f4',
   },
   {
@@ -135,7 +131,6 @@ export const starterSubscriptions = [
     lastUsed: '2 days ago',
     plan: 'Standard HD',
     paymentMethod: 'UPI AutoPay (HDFC)',
-    icon: '🎬',
     color: '#0066f5',
   },
   {
@@ -150,7 +145,6 @@ export const starterSubscriptions = [
     lastUsed: 'Today',
     plan: 'Premium Ultra HD',
     paymentMethod: 'Credit Card (HDFC)',
-    icon: '🍿',
     color: '#e50914',
   },
   {
@@ -165,7 +159,6 @@ export const starterSubscriptions = [
     lastUsed: 'Today',
     plan: 'Plus Membership',
     paymentMethod: 'Credit Card (Axis)',
-    icon: '🤖',
     color: '#10a37f',
   },
   {
@@ -180,7 +173,6 @@ export const starterSubscriptions = [
     lastUsed: '2 days ago',
     plan: 'Annual Prime',
     paymentMethod: 'Amazon Pay ICICI Card',
-    icon: '📦',
     color: '#ff9900',
   },
 ];
@@ -544,6 +536,10 @@ export function FinanceProvider({ children }) {
         setActivePage('instant-add');
       } else if (path === '/shortcuts' || path === '/keyboard-shortcuts') {
         setActivePage('shortcuts');
+      } else if (path === '/subscriptions' || path === '/subscription' || path === '/recurring') {
+        setActivePage('subscriptions');
+      } else if (path === '/transactions' || path === '/transaction' || path === '/all-transactions') {
+        setActivePage('transactions');
       } else if (path === '/dashboard') {
         setActivePage('dashboard');
       } else if (path === '/login') {
@@ -830,7 +826,6 @@ export function FinanceProvider({ children }) {
       lastUsed: newSub.lastUsed || 'Recent',
       plan: newSub.plan || 'Standard',
       paymentMethod: newSub.paymentMethod || 'UPI AutoPay',
-      icon: newSub.icon || '💳',
       color: newSub.color || '#3b82f6',
     };
     setSubscriptionsList((prev) => [subToAdd, ...prev]);

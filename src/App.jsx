@@ -20,6 +20,7 @@ import Jars from './components/Jars';
 import Split from './components/Split';
 import InstantAddBars from './components/InstantAddBars';
 import Subscriptions from './components/Subscriptions';
+import TransactionsPage from './components/TransactionsPage';
 import ShortcutsModal from './components/ShortcutsModal';
 import ShortcutsPage from './components/ShortcutsPage';
 import { formatCurrency } from './utils/finance';
@@ -361,6 +362,7 @@ function App() {
     onToggleTheme: toggleTheme,
     onHomeClick: () => navigateTo('home', '/'),
     onDashboardClick: () => navigateTo('dashboard', '/dashboard'),
+    onTransactionsClick: () => navigateTo('transactions', '/transactions'),
     onHealthClick: () => navigateTo('health', '/health'),
     onBudgetClick: () => navigateTo('budget', '/budget'),
     onAiCoachClick: () => navigateTo('aicoach', '/ai-coach'),
@@ -673,6 +675,49 @@ function App() {
             </button>
           </div>
           <Subscriptions
+            onBackToDashboard={() => navigateTo('dashboard', '/dashboard')}
+            onToggleSidebar={toggleSidebar}
+          />
+        </main>
+      </div>
+    );
+  }
+
+  // Dedicated Transactions page
+  if (activePage === 'transactions') {
+    return (
+      <div className="transactions-page-wrapper">
+        {isSidebarOpenMobile && (
+          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
+        )}
+        <Sidebar {...sidebarProps} />
+        <main className="transactions-main">
+          <div className="view-header-bar">
+            <button
+              type="button"
+              className="sidebar-toggle-btn"
+              onClick={toggleSidebar}
+              title="Toggle Sidebar Menu"
+            >
+              ☰
+            </button>
+            <button
+              type="button"
+              className="theme-toggle-btn"
+              onClick={toggleTheme}
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+            >
+              {theme === 'dark' ? 'Light Theme' : 'Dark Theme'}
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => navigateTo('dashboard', '/dashboard')}
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+          <TransactionsPage
             onBackToDashboard={() => navigateTo('dashboard', '/dashboard')}
             onToggleSidebar={toggleSidebar}
           />

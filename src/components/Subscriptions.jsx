@@ -2,19 +2,20 @@ import React, { useState, useMemo } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { formatCurrency } from '../utils/finance';
 import { translate } from '../utils/i18n';
+import CategoryIcon, { getCategoryColor } from './CategoryIcon';
 import '../proFeatures.css';
 
 // Popular subscription presets for quick 1-click addition
 const POPULAR_PRESETS = [
-  { name: 'Netflix', category: 'Entertainment', amount: 649, cycle: 'monthly', plan: 'Premium 4K', icon: '🍿', color: '#e50914', paymentMethod: 'Credit Card' },
-  { name: 'Spotify Premium', category: 'Entertainment', amount: 119, cycle: 'monthly', plan: 'Individual', icon: '🎵', color: '#1db954', paymentMethod: 'UPI AutoPay' },
-  { name: 'JioCinema Premium', category: 'Entertainment', amount: 149, cycle: 'monthly', plan: 'Standard HD', icon: '🎬', color: '#0066f5', paymentMethod: 'UPI AutoPay' },
-  { name: 'Hotstar Super', category: 'Entertainment', amount: 299, cycle: 'monthly', plan: 'Super Plan', icon: '⭐', color: '#0c2045', paymentMethod: 'Debit Card' },
-  { name: 'Amazon Prime', category: 'Shopping', amount: 1499, cycle: 'yearly', plan: 'Annual Membership', icon: '📦', color: '#ff9900', paymentMethod: 'Credit Card' },
-  { name: 'YouTube Premium', category: 'Entertainment', amount: 149, cycle: 'monthly', plan: 'Family / Solo', icon: '▶️', color: '#ff0000', paymentMethod: 'UPI AutoPay' },
-  { name: 'ChatGPT Plus', category: 'Productivity', amount: 1999, cycle: 'monthly', plan: 'Plus Member', icon: '🤖', color: '#10a37f', paymentMethod: 'Credit Card' },
-  { name: 'Cult.fit Gym', category: 'Fitness', amount: 1499, cycle: 'monthly', plan: 'Elite Pass', icon: '🏋️', color: '#ff3278', paymentMethod: 'Credit Card' },
-  { name: 'Google One 100GB', category: 'Utilities', amount: 130, cycle: 'monthly', plan: 'Basic 100GB', icon: '☁️', color: '#4285f4', paymentMethod: 'Play Balance' },
+  { name: 'Netflix', category: 'Entertainment', amount: 649, cycle: 'monthly', plan: 'Premium 4K', color: '#e50914', paymentMethod: 'Credit Card' },
+  { name: 'Spotify Premium', category: 'Entertainment', amount: 119, cycle: 'monthly', plan: 'Individual', color: '#1db954', paymentMethod: 'UPI AutoPay' },
+  { name: 'JioCinema Premium', category: 'Entertainment', amount: 149, cycle: 'monthly', plan: 'Standard HD', color: '#0066f5', paymentMethod: 'UPI AutoPay' },
+  { name: 'Hotstar Super', category: 'Entertainment', amount: 299, cycle: 'monthly', plan: 'Super Plan', color: '#0c2045', paymentMethod: 'Debit Card' },
+  { name: 'Amazon Prime', category: 'Shopping', amount: 1499, cycle: 'yearly', plan: 'Annual Membership', color: '#ff9900', paymentMethod: 'Credit Card' },
+  { name: 'YouTube Premium', category: 'Entertainment', amount: 149, cycle: 'monthly', plan: 'Family / Solo', color: '#ff0000', paymentMethod: 'UPI AutoPay' },
+  { name: 'ChatGPT Plus', category: 'Productivity', amount: 1999, cycle: 'monthly', plan: 'Plus Member', color: '#10a37f', paymentMethod: 'Credit Card' },
+  { name: 'Cult.fit Gym', category: 'Fitness', amount: 1499, cycle: 'monthly', plan: 'Elite Pass', color: '#ff3278', paymentMethod: 'Credit Card' },
+  { name: 'Google One 100GB', category: 'Utilities', amount: 130, cycle: 'monthly', plan: 'Basic 100GB', color: '#4285f4', paymentMethod: 'Play Balance' },
 ];
 
 const CATEGORIES = ['All', 'Entertainment', 'Fitness', 'Productivity', 'Utilities', 'Shopping'];
@@ -52,7 +53,6 @@ function Subscriptions({ onBackToDashboard }) {
   const [formRenewalDate, setFormRenewalDate] = useState('');
   const [formPlan, setFormPlan] = useState('');
   const [formPaymentMethod, setFormPaymentMethod] = useState('UPI AutoPay');
-  const [formIcon, setFormIcon] = useState('💳');
   const [formColor, setFormColor] = useState('#3b82f6');
 
   const showToast = (msg) => {
@@ -151,7 +151,6 @@ function Subscriptions({ onBackToDashboard }) {
     setFormRenewalDate(new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10));
     setFormPlan('');
     setFormPaymentMethod('UPI AutoPay');
-    setFormIcon('💳');
     setFormColor('#3b82f6');
     setIsModalOpen(true);
   };
@@ -165,7 +164,6 @@ function Subscriptions({ onBackToDashboard }) {
     setFormRenewalDate(sub.renewalDate || '');
     setFormPlan(sub.plan || '');
     setFormPaymentMethod(sub.paymentMethod || 'UPI AutoPay');
-    setFormIcon(sub.icon || '💳');
     setFormColor(sub.color || '#3b82f6');
     setIsModalOpen(true);
   };
@@ -177,7 +175,6 @@ function Subscriptions({ onBackToDashboard }) {
     setFormCycle(preset.cycle);
     setFormPlan(preset.plan);
     setFormPaymentMethod(preset.paymentMethod);
-    setFormIcon(preset.icon);
     setFormColor(preset.color);
   };
 
@@ -194,8 +191,7 @@ function Subscriptions({ onBackToDashboard }) {
       renewalDate: formRenewalDate,
       plan: formPlan || 'Standard',
       paymentMethod: formPaymentMethod,
-      icon: formIcon,
-      color: formColor,
+      color: formColor || getCategoryColor(formCategory),
       note: `${formCategory} · ${formCycle}`,
       status: 'active',
       lastUsed: 'Recently added',
@@ -258,15 +254,31 @@ function Subscriptions({ onBackToDashboard }) {
               type="button"
               className={viewMode === 'grid' ? 'active' : ''}
               onClick={() => setViewMode('grid')}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
             >
-              ⊞ Grid
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="7" height="7" />
+                <rect x="14" y="3" width="7" height="7" />
+                <rect x="14" y="14" width="7" height="7" />
+                <rect x="3" y="14" width="7" height="7" />
+              </svg>
+              Grid
             </button>
             <button
               type="button"
               className={viewMode === 'table' ? 'active' : ''}
               onClick={() => setViewMode('table')}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
             >
-              ☰ List
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <line x1="3" y1="6" x2="3.01" y2="6" />
+                <line x1="3" y1="12" x2="3.01" y2="12" />
+                <line x1="3" y1="18" x2="3.01" y2="18" />
+              </svg>
+              List
             </button>
           </div>
 
@@ -326,7 +338,13 @@ function Subscriptions({ onBackToDashboard }) {
       {showAiTip && metrics.unusedSub && (
         <div className="sub-clean-ai-tip">
           <div className="sub-ai-tip-left">
-            <span className="sub-ai-tip-icon">💡</span>
+            <span className="sub-ai-tip-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="9" y1="18" x2="15" y2="18" />
+                <line x1="10" y1="22" x2="14" y2="22" />
+                <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
+              </svg>
+            </span>
             <span>
               <strong>{metrics.unusedSub.name}</strong> hasn't been opened in 40 days. Cancel it to save{' '}
               <strong>{formatCurrency(metrics.unusedSub.amount)} every month</strong>.
@@ -368,7 +386,12 @@ function Subscriptions({ onBackToDashboard }) {
         </div>
 
         <div className="sub-clean-search">
-          <span className="sub-search-glass">🔍</span>
+          <span className="sub-search-glass" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </span>
           <input
             type="text"
             placeholder="Search subscriptions..."
@@ -404,20 +427,25 @@ function Subscriptions({ onBackToDashboard }) {
           {filteredSubscriptions.map((sub) => {
             const daysLeft = getDaysUntilRenewal(sub.renewalDate);
             const isPaused = sub.status === 'paused';
+            const catColor = getCategoryColor(sub.category);
 
             return (
               <div
                 key={sub.id || sub.name}
                 className={`sub-clean-card ${isPaused ? 'card-paused' : ''}`}
               >
-                {/* Top: Icon + Title + Status */}
+                {/* Top: Category Icon + Title + Status */}
                 <div className="sub-card-clean-top">
                   <div className="sub-card-brand">
                     <div
                       className="sub-clean-icon"
-                      style={{ backgroundColor: `${sub.color || '#3b82f6'}1a`, borderColor: `${sub.color || '#3b82f6'}33` }}
+                      style={{
+                        backgroundColor: `${catColor}18`,
+                        borderColor: `${catColor}35`,
+                        color: catColor,
+                      }}
                     >
-                      {sub.icon || '💳'}
+                      <CategoryIcon category={sub.category} size={20} />
                     </div>
                     <div>
                       <h3 className="sub-clean-name">{sub.name}</h3>
@@ -446,8 +474,14 @@ function Subscriptions({ onBackToDashboard }) {
 
                 {/* Info: Next renewal date + payment method */}
                 <div className="sub-card-clean-info">
-                  <span>
-                    📅 Next bill:{' '}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                      <line x1="16" y1="2" x2="16" y2="6" />
+                      <line x1="8" y1="2" x2="8" y2="6" />
+                      <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                    Next bill:{' '}
                     <strong>
                       {sub.renewalDate
                         ? new Date(sub.renewalDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
@@ -464,22 +498,47 @@ function Subscriptions({ onBackToDashboard }) {
                     className="sub-action-pill"
                     onClick={() => handleTogglePause(sub)}
                   >
-                    {isPaused ? '▶ Resume' : '⏸ Pause'}
+                    {isPaused ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                          <polygon points="5 3 19 12 5 21 5 3" />
+                        </svg>
+                        Resume
+                      </span>
+                    ) : (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                          <rect x="6" y="4" width="4" height="16" />
+                          <rect x="14" y="4" width="4" height="16" />
+                        </svg>
+                        Pause
+                      </span>
+                    )}
                   </button>
                   <button
                     type="button"
                     className="sub-action-pill"
                     onClick={() => openEditModal(sub)}
                   >
-                    ✏️ Edit
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                      </svg>
+                      Edit
+                    </span>
                   </button>
                   <button
                     type="button"
                     className="sub-action-pill action-delete"
                     onClick={() => handleDelete(sub)}
                     title="Cancel subscription"
+                    aria-label="Delete subscription"
                   >
-                    🗑️
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
                   </button>
                 </div>
               </div>
@@ -505,19 +564,39 @@ function Subscriptions({ onBackToDashboard }) {
               {filteredSubscriptions.map((sub) => {
                 const daysLeft = getDaysUntilRenewal(sub.renewalDate);
                 const isPaused = sub.status === 'paused';
+                const catColor = getCategoryColor(sub.category);
 
                 return (
                   <tr key={sub.id || sub.name} className={isPaused ? 'row-paused' : ''}>
                     <td>
                       <div className="sub-table-clean-brand">
-                        <span>{sub.icon || '💳'}</span>
+                        <div
+                          style={{
+                            width: '30px',
+                            height: '30px',
+                            borderRadius: '8px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: `${catColor}18`,
+                            color: catColor,
+                            flexShrink: 0,
+                            marginRight: '8px',
+                          }}
+                        >
+                          <CategoryIcon category={sub.category} size={16} />
+                        </div>
                         <div>
                           <strong>{sub.name}</strong>
                           <span className="sub-table-plan-text">{sub.plan || 'Standard'}</span>
                         </div>
                       </div>
                     </td>
-                    <td>{sub.category}</td>
+                    <td>
+                      <span className="sub-cat-pill" style={{ color: catColor }}>
+                        {sub.category}
+                      </span>
+                    </td>
                     <td>
                       <strong>₹{Number(sub.amount || 0).toLocaleString('en-IN')}</strong>
                       <small className="text-muted">/{sub.cycle === 'yearly' ? 'yr' : 'mo'}</small>
@@ -559,6 +638,7 @@ function Subscriptions({ onBackToDashboard }) {
                           onClick={() => handleDelete(sub)}
                           className="sub-table-btn btn-del"
                           title="Delete"
+                          aria-label="Delete"
                         >
                           ×
                         </button>
@@ -590,18 +670,23 @@ function Subscriptions({ onBackToDashboard }) {
             {/* Quick 1-Click Autofill Presets */}
             {!editingSub && (
               <div className="sub-clean-presets">
-                <span className="sub-presets-label">Click any to quick fill:</span>
+                <span className="sub-presets-label">Quick presets:</span>
                 <div className="sub-presets-chips-row">
-                  {POPULAR_PRESETS.map((p) => (
-                    <button
-                      key={p.name}
-                      type="button"
-                      className="sub-clean-preset-pill"
-                      onClick={() => handleApplyPreset(p)}
-                    >
-                      {p.icon} {p.name}
-                    </button>
-                  ))}
+                  {POPULAR_PRESETS.map((p) => {
+                    const presetColor = getCategoryColor(p.category);
+                    return (
+                      <button
+                        key={p.name}
+                        type="button"
+                        className="sub-clean-preset-pill"
+                        onClick={() => handleApplyPreset(p)}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                      >
+                        <CategoryIcon category={p.category} size={14} color={presetColor} />
+                        <span>{p.name}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
