@@ -1,23 +1,24 @@
 import React from 'react';
+import { NavLink, Link } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
 import LanguageSelector from './LanguageSelector';
 import { translate } from '../utils/i18n';
 
 const navItems = [
-  { label: 'Home', title: 'Go to home', page: 'home', icon: 'home', action: 'onHomeClick' },
-  { label: 'Dashboard', title: 'View your financial dashboard', page: 'dashboard', icon: 'grid', action: 'onDashboardClick' },
-  { label: 'Transactions', title: 'View and manage all transactions', page: 'transactions', icon: 'transactions', action: 'onTransactionsClick' },
-  { label: 'Health', title: 'View financial health', page: 'health', icon: 'heart', action: 'onHealthClick' },
-  { label: 'Budget', title: 'View budget prediction', page: 'budget', icon: 'chart', action: 'onBudgetClick' },
-  { label: 'AI Coach', title: 'Open AI Coach', page: 'aicoach', icon: 'spark', action: 'onAiCoachClick' },
-  { label: 'Scanner', title: 'Open receipt scanner', page: 'scanner', icon: 'receipt', action: 'onReceiptScannerClick' },
-  { label: 'Voice Finance', title: 'Voice finance management coming soon', page: 'voice', icon: 'microphone', action: 'onVoiceFinanceClick' },
-  { label: 'Activity Calendar', title: 'View activity calendar', page: 'nospend', icon: 'calendar', action: 'onNoSpendClick' },
-  { label: 'Money River', title: 'View your money river flow', page: 'river', icon: 'river', action: 'onMoneyRiverClick' },
-  { label: 'Money Jars', title: 'Manage savings goals and jars', page: 'jars', icon: 'jar', action: 'onJarsClick' },
-  { label: 'Split Bills', title: 'Track and split shared group expenses', page: 'split', icon: 'split', action: 'onSplitClick' },
-  { label: 'Subscriptions', title: 'Manage all subscriptions & recurring payments', page: 'subscriptions', icon: 'subscription', action: 'onSubscriptionsClick' },
-  { label: 'Instant Add', title: 'Instant natural language transaction add', page: 'instant-add', icon: 'zap', action: 'onInstantAddClick' },
+  { label: 'Home', title: 'Go to home', page: 'home', path: '/', icon: 'home', action: 'onHomeClick' },
+  { label: 'Dashboard', title: 'View your financial dashboard', page: 'dashboard', path: '/dashboard', icon: 'grid', action: 'onDashboardClick' },
+  { label: 'Transactions', title: 'View and manage all transactions', page: 'transactions', path: '/transactions', icon: 'transactions', action: 'onTransactionsClick' },
+  { label: 'Health', title: 'View financial health', page: 'health', path: '/health', icon: 'heart', action: 'onHealthClick' },
+  { label: 'Budget', title: 'View budget prediction', page: 'budget', path: '/budget', icon: 'chart', action: 'onBudgetClick' },
+  { label: 'AI Coach', title: 'Open AI Coach', page: 'aicoach', path: '/ai-coach', icon: 'spark', action: 'onAiCoachClick' },
+  { label: 'Scanner', title: 'Open receipt scanner', page: 'scanner', path: '/receipt-scanner', icon: 'receipt', action: 'onReceiptScannerClick' },
+  { label: 'Voice Finance', title: 'Voice finance management coming soon', page: 'voice', path: '/voice-finance', icon: 'microphone', action: 'onVoiceFinanceClick' },
+  { label: 'Activity Calendar', title: 'View activity calendar', page: 'nospend', path: '/no-spend', icon: 'calendar', action: 'onNoSpendClick' },
+  { label: 'Money River', title: 'View your money river flow', page: 'river', path: '/money-river', icon: 'river', action: 'onMoneyRiverClick' },
+  { label: 'Money Jars', title: 'Manage savings goals and jars', page: 'jars', path: '/jars', icon: 'jar', action: 'onJarsClick' },
+  { label: 'Split Bills', title: 'Track and split shared group expenses', page: 'split', path: '/split', icon: 'split', action: 'onSplitClick' },
+  { label: 'Subscriptions', title: 'Manage all subscriptions & recurring payments', page: 'subscriptions', path: '/subscriptions', icon: 'subscription', action: 'onSubscriptionsClick' },
+  { label: 'Instant Add', title: 'Instant natural language transaction add', page: 'instant-add', path: '/instant-add', icon: 'zap', action: 'onInstantAddClick' },
 ];
 
 function NavIcon({ name }) {
@@ -105,10 +106,10 @@ function Sidebar(props) {
   return (
     <aside className={`sidebar ${!isVisible ? 'sidebar-hidden' : ''} ${isOpenMobile ? 'mobile-open' : ''}`}>
       <div className="sidebar-top">
-        <div className="sidebar-brand">
+        <Link to="/dashboard" className="sidebar-brand" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="sidebar-logo">FT</div>
           <span>FinTrack</span>
-        </div>
+        </Link>
         <button
           type="button"
           className="sidebar-theme-toggle"
@@ -143,9 +144,10 @@ function Sidebar(props) {
             : activePage === item.page;
 
           return (
-            <button
-              type="button"
+            <NavLink
               key={item.page}
+              to={item.path}
+              end={item.path === '/'}
               className={`nav-item ${isActive ? 'active' : ''}`}
               onClick={() => handleNavClick(actions[item.action])}
               title={t(item.title)}
@@ -154,7 +156,7 @@ function Sidebar(props) {
             >
               <NavIcon name={item.icon} />
               <span>{t(item.label)}</span>
-            </button>
+            </NavLink>
           );
         })}
 

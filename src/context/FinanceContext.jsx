@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { calculateFinancialSummary, getCategoryTotals, formatCurrency } from '../utils/finance';
 
 // LocalStorage Keys
@@ -449,7 +450,57 @@ export function FinanceProvider({ children }) {
       return 'en';
     }
   });
-  const [activePage, setActivePage] = useState('home');
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const getPageFromPath = useCallback((pathname) => {
+    const path = (pathname || '').replace(/\/+$/, '') || '/';
+    if (path === '/receipt-scanner' || path === '/scanner') return 'scanner';
+    if (path === '/voice-finance' || path === '/voice') return 'voice';
+    if (path === '/ai-coach' || path === '/aicoach') return 'aicoach';
+    if (path === '/health') return 'health';
+    if (path === '/budget') return 'budget';
+    if (path === '/no-spend' || path === '/nospend' || path === '/calendar' || path === '/activity-calendar') return 'nospend';
+    if (path === '/money-river' || path === '/river') return 'river';
+    if (path === '/jars' || path === '/money-jars') return 'jars';
+    if (path === '/split' || path === '/split-bill' || path === '/split-bills') return 'split';
+    if (path === '/instant-add' || path === '/instant' || path === '/instant-bar') return 'instant-add';
+    if (path === '/shortcuts' || path === '/keyboard-shortcuts') return 'shortcuts';
+    if (path === '/subscriptions' || path === '/subscription' || path === '/recurring') return 'subscriptions';
+    if (path === '/transactions' || path === '/transaction' || path === '/all-transactions') return 'transactions';
+    if (path === '/dashboard') return 'dashboard';
+    if (path === '/login') return 'login';
+    if (path === '/register') return 'register';
+    if (path === '/' || path === '/home') return 'home';
+    return 'home';
+  }, []);
+
+  const activePage = useMemo(() => getPageFromPath(location.pathname), [location.pathname, getPageFromPath]);
+
+  const setActivePage = useCallback((page) => {
+    const pageToPathMap = {
+      home: '/',
+      dashboard: '/dashboard',
+      transactions: '/transactions',
+      health: '/health',
+      budget: '/budget',
+      aicoach: '/ai-coach',
+      scanner: '/receipt-scanner',
+      voice: '/voice-finance',
+      nospend: '/no-spend',
+      river: '/money-river',
+      jars: '/jars',
+      split: '/split',
+      subscriptions: '/subscriptions',
+      'instant-add': '/instant-add',
+      shortcuts: '/shortcuts',
+      login: '/login',
+      register: '/register',
+    };
+    navigate(pageToPathMap[page] || `/${page}`);
+  }, [navigate]);
+
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [isSidebarOpenMobile, setIsSidebarOpenMobile] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
@@ -510,51 +561,7 @@ export function FinanceProvider({ children }) {
     }
   }, [language]);
 
-  // Sync route on popstate and initial URL
-  useEffect(() => {
-    const syncRouteFromPath = () => {
-      const path = window.location.pathname;
-      if (path === '/receipt-scanner') {
-        setActivePage('scanner');
-      } else if (path === '/voice-finance') {
-        setActivePage('voice');
-      } else if (path === '/ai-coach') {
-        setActivePage('aicoach');
-      } else if (path === '/health') {
-        setActivePage('health');
-      } else if (path === '/budget') {
-        setActivePage('budget');
-      } else if (path === '/no-spend' || path === '/nospend' || path === '/calendar' || path === '/activity-calendar') {
-        setActivePage('nospend');
-      } else if (path === '/money-river' || path === '/river') {
-        setActivePage('river');
-      } else if (path === '/jars' || path === '/money-jars') {
-        setActivePage('jars');
-      } else if (path === '/split' || path === '/split-bill' || path === '/split-bills') {
-        setActivePage('split');
-      } else if (path === '/instant-add' || path === '/instant' || path === '/instant-bar') {
-        setActivePage('instant-add');
-      } else if (path === '/shortcuts' || path === '/keyboard-shortcuts') {
-        setActivePage('shortcuts');
-      } else if (path === '/subscriptions' || path === '/subscription' || path === '/recurring') {
-        setActivePage('subscriptions');
-      } else if (path === '/transactions' || path === '/transaction' || path === '/all-transactions') {
-        setActivePage('transactions');
-      } else if (path === '/dashboard') {
-        setActivePage('dashboard');
-      } else if (path === '/login') {
-        setActivePage('login');
-      } else if (path === '/register') {
-        setActivePage('register');
-      } else {
-        setActivePage('home');
-      }
-    };
-
-    syncRouteFromPath();
-    window.addEventListener('popstate', syncRouteFromPath);
-    return () => window.removeEventListener('popstate', syncRouteFromPath);
-  }, []);
+  // Route synchronisation is handled natively by react-router-dom
 
   // 6. Centralized Transaction Actions (Immutable state updates)
   const addTransaction = useCallback((newTx) => {
@@ -945,12 +952,29 @@ export function FinanceProvider({ children }) {
   }, []);
 
   const navigateTo = useCallback((page, path) => {
-    setActivePage(page);
     setIsSidebarOpenMobile(false);
-    if (window.history && window.history.pushState) {
-      window.history.pushState({}, '', path);
-    }
-  }, []);
+    const pageToPathMap = {
+      home: '/',
+      dashboard: '/dashboard',
+      transactions: '/transactions',
+      health: '/health',
+      budget: '/budget',
+      aicoach: '/ai-coach',
+      scanner: '/receipt-scanner',
+      voice: '/voice-finance',
+      nospend: '/no-spend',
+      river: '/money-river',
+      jars: '/jars',
+      split: '/split',
+      subscriptions: '/subscriptions',
+      'instant-add': '/instant-add',
+      shortcuts: '/shortcuts',
+      login: '/login',
+      register: '/register',
+    };
+    const target = path || pageToPathMap[page] || (page === 'home' ? '/' : `/${page}`);
+    navigate(target);
+  }, [navigate]);
 
   const toggleSidebar = useCallback(() => {
     setIsSidebarVisible((prev) => !prev);

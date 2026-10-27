@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useFinance } from './context/FinanceContext';
 import HomePage from './components/HomePage';
 import Login from './components/Login';
 import CreateAccount from './components/CreateAccount';
+import NotFound from './components/NotFound';
 import Sidebar from './components/Sidebar';
 import Panel from './components/Panel';
 import ListRow from './components/ListRow';
@@ -26,10 +28,30 @@ import ShortcutsPage from './components/ShortcutsPage';
 import { formatCurrency } from './utils/finance';
 import { translate } from './utils/i18n';
 
+function ProtectedRoute({ children }) {
+  const { isLoggedIn } = useFinance();
+  const location = useLocation();
+
+  if (!isLoggedIn) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  return children;
+}
+
+function PublicOnlyRoute({ children }) {
+  const { isLoggedIn } = useFinance();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || '/dashboard';
+
+  if (isLoggedIn) {
+    return <Navigate to={from} replace />;
+  }
+  return children;
+}
+
 function App() {
   const {
     transactions,
-    setTransactions,
     addTransaction,
     updateTransaction,
     deleteTransaction,
@@ -48,7 +70,6 @@ function App() {
     setIsLoggedIn,
     isRegistering,
     setIsRegistering,
-    login,
     logout,
 
     theme,
@@ -61,11 +82,8 @@ function App() {
     isSidebarOpenMobile,
     setIsSidebarOpenMobile,
     toggleSidebar,
-    closeMobileSidebar,
     isAddExpenseOpen,
-    setIsAddExpenseOpen,
     addExpenseDefaultCategory,
-    setAddExpenseDefaultCategory,
     openAddExpense,
     closeAddExpense,
     isShortcutsModalOpen,
@@ -158,7 +176,7 @@ function App() {
         return;
       }
 
-      // Tab 4: Budget Prediction (Ctrl+Alt+B, Alt+B, Alt+4)
+      // Tab 4: Budget (Ctrl+Alt+B, Alt+B, Alt+4)
       if ((isCombo && isKey('b')) || (isAlt && (key === '4' || code === 'Digit4'))) {
         event.preventDefault();
         navigateTo('budget', '/budget');
@@ -166,7 +184,7 @@ function App() {
         return;
       }
 
-      // Tab 5: AI Financial Coach (Ctrl+Alt+A, Alt+A, Alt+5)
+      // Tab 5: AI Coach (Ctrl+Alt+A, Alt+A, Alt+5)
       if ((isCombo && isKey('a')) || (isAlt && (key === '5' || code === 'Digit5'))) {
         event.preventDefault();
         navigateTo('aicoach', '/ai-coach');
@@ -174,7 +192,7 @@ function App() {
         return;
       }
 
-      // Tab 6: Activity Calendar / No-Spend (Ctrl+Alt+C, Alt+C, Alt+6)
+      // Tab 6: Activity Calendar / No-Spend Heatmap (Ctrl+Alt+C, Alt+C, Alt+6)
       if ((isCombo && isKey('c')) || (isAlt && (key === '6' || code === 'Digit6'))) {
         event.preventDefault();
         navigateTo('nospend', '/no-spend');
@@ -198,23 +216,23 @@ function App() {
         return;
       }
 
-      // Tab: Money Jars (Ctrl+Alt+J, Alt+J)
-      if (isCombo && isKey('j')) {
+      // Tab 9: Money Jars (Ctrl+Alt+J, Alt+J, Alt+9)
+      if ((isCombo && isKey('j')) || (isAlt && (key === '9' || code === 'Digit9'))) {
         event.preventDefault();
         navigateTo('jars', '/jars');
         closeShortcutsModal();
         return;
       }
 
-      // Tab: Split Bills (Ctrl+Alt+P, Alt+P)
-      if (isCombo && isKey('p')) {
+      // Tab 10: Split Bills (Ctrl+Alt+P, Alt+P, Alt+0)
+      if ((isCombo && isKey('p')) || (isAlt && (key === '0' || code === 'Digit0'))) {
         event.preventDefault();
         navigateTo('split', '/split');
         closeShortcutsModal();
         return;
       }
 
-      // Tab: Subscriptions (Ctrl+Alt+U, Alt+U)
+      // Tab 11: Subscriptions (Ctrl+Alt+U, Alt+U)
       if (isCombo && isKey('u')) {
         event.preventDefault();
         navigateTo('subscriptions', '/subscriptions');
@@ -222,7 +240,7 @@ function App() {
         return;
       }
 
-      // Tab: Instant Add (Ctrl+Alt+I, Alt+I)
+      // Tab 12: Instant Add NLP (Ctrl+Alt+I, Alt+I)
       if (isCombo && isKey('i')) {
         event.preventDefault();
         navigateTo('instant-add', '/instant-add');
@@ -230,39 +248,38 @@ function App() {
         return;
       }
 
-      // Tab 9: Shortcuts Directory (Ctrl+Alt+K, Alt+9)
-      if ((isCombo && isKey('k')) || (isAlt && (key === '9' || code === 'Digit9'))) {
+      // All Shortcuts Directory (Ctrl+Alt+K)
+      if (isCombo && isKey('k')) {
         event.preventDefault();
         navigateTo('shortcuts', '/shortcuts');
         closeShortcutsModal();
         return;
       }
 
-      // Home / Landing (Ctrl+Alt+0, Alt+0)
-      if (isAlt && (key === '0' || code === 'Digit0')) {
+      // Home landing page (Ctrl+Alt+Backspace)
+      if (isCombo && (key === 'backspace' || code === 'Backspace')) {
         event.preventDefault();
         navigateTo('home', '/');
         closeShortcutsModal();
         return;
       }
 
-      // Action: Add Transaction (Ctrl+Alt+N, Alt+N, Alt+T, Alt++)
-      if ((isCombo && (isKey('n') || isKey('t'))) || (isAlt && key === '+')) {
+      // Quick Add Transaction: "+" or "="
+      if (key === '+' || key === '=') {
         event.preventDefault();
         openAddExpense('Food');
-        closeShortcutsModal();
         return;
       }
 
-      // Action: Toggle Sidebar (Ctrl+B, Alt+M)
-      if ((isCtrl && (key === 'b' || code === 'KeyB')) || (isAlt && isKey('m'))) {
+      // Toggle Left Sidebar: Ctrl+B or Alt+B (without shift)
+      if ((isCtrl && !isShift && isKey('b')) || (isAlt && !isCtrl && !isShift && key === 'b')) {
         event.preventDefault();
         toggleSidebar();
         return;
       }
 
-      // Action: Toggle Theme (Alt+L, Ctrl+Alt+T)
-      if ((isCombo && isKey('l')) || ((isCtrl && isAlt) && isKey('t'))) {
+      // Toggle Theme: Ctrl+T or Alt+T
+      if (isCombo && isKey('t')) {
         event.preventDefault();
         toggleTheme();
         return;
@@ -284,73 +301,6 @@ function App() {
     toggleSidebar,
     toggleTheme,
   ]);
-
-  // 1. Dedicated Minimal Animated Home Page (Public Landing - Shown before login)
-  if (activePage === 'home') {
-    return (
-      <HomePage
-        onNavigateToDashboard={() => {
-          if (!isLoggedIn) {
-            navigateTo('login', '/login');
-          } else {
-            navigateTo('dashboard', '/dashboard');
-          }
-        }}
-        onNavigateToLogin={() => navigateTo('login', '/login')}
-        onNavigateToScanner={() => {
-          if (!isLoggedIn) {
-            navigateTo('login', '/login');
-          } else {
-            navigateTo('scanner', '/receipt-scanner');
-          }
-        }}
-        onNavigateToAiCoach={() => {
-          if (!isLoggedIn) {
-            navigateTo('login', '/login');
-          } else {
-            navigateTo('aicoach', '/ai-coach');
-          }
-        }}
-        onLogout={logout}
-        theme={theme}
-        onToggleTheme={toggleTheme}
-        isLoggedIn={isLoggedIn}
-      />
-    );
-  }
-
-  // 2. Authentication Gate: If not logged in, user MUST sign in before seeing Dashboard & features
-  if (!isLoggedIn) {
-    if (activePage === 'register' || isRegistering) {
-      return (
-        <CreateAccount
-          onLogin={() => {
-            setIsLoggedIn(true);
-            setIsRegistering(false);
-            navigateTo('dashboard', '/dashboard');
-          }}
-          onBackToLogin={() => {
-            setIsRegistering(false);
-            navigateTo('login', '/login');
-          }}
-          onBackToHome={() => navigateTo('home', '/')}
-        />
-      );
-    }
-    return (
-      <Login
-        onLogin={() => {
-          setIsLoggedIn(true);
-          navigateTo('dashboard', '/dashboard');
-        }}
-        onNavigateToCreateAccount={() => {
-          setIsRegistering(true);
-          navigateTo('register', '/register');
-        }}
-        onBackToHome={() => navigateTo('home', '/')}
-      />
-    );
-  }
 
   // Common navigation handlers for Sidebar (Authenticated session)
   const sidebarProps = {
@@ -377,445 +327,22 @@ function App() {
     onLogout: logout,
   };
 
-  // Dedicated Receipt Scanner page
-  if (activePage === 'scanner') {
-    return (
-      <div className="receipt-scanner-page">
-        {isSidebarOpenMobile && (
-          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
-        )}
-        <Sidebar {...sidebarProps} />
-        <main className="receipt-scanner-main">
-          <ReceiptScanner
-            onBackToDashboard={() => navigateTo('dashboard', '/dashboard')}
-            onAddExpense={addTransaction}
-            onToggleSidebar={toggleSidebar}
-          />
-        </main>
-      </div>
-    );
-  }
-
-  if (activePage === 'voice') {
-    return (
-      <div className="voice-finance-page">
-        {isSidebarOpenMobile && (
-          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
-        )}
-        <Sidebar {...sidebarProps} />
-        <main className="voice-finance-main">
-          <VoiceFinancePage
-            onBackToDashboard={() => navigateTo('dashboard', '/dashboard')}
-            onToggleSidebar={toggleSidebar}
-          />
-        </main>
-      </div>
-    );
-  }
-
-  // Full-screen AI Coach page
-  if (activePage === 'aicoach') {
-    return (
-      <div className="ai-coach-page">
-        {isSidebarOpenMobile && (
-          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
-        )}
-        <Sidebar {...sidebarProps} />
-        <main className="ai-coach-main">
-          <div className="view-header-bar">
-            <button
-              type="button"
-              className="sidebar-toggle-btn"
-              onClick={toggleSidebar}
-              title="Toggle Sidebar Menu"
-            >
-              ☰
-            </button>
-            <button
-              type="button"
-              className="btn-primary ai-coach-back"
-              onClick={() => navigateTo('dashboard', '/dashboard')}
-            >
-              ← Back to Dashboard
-            </button>
-          </div>
-          <AiCoach transactions={transactions} />
-        </main>
-      </div>
-    );
-  }
-
-  // Full-screen Financial Health page
-  if (activePage === 'health') {
-    return (
-      <div className="health-page">
-        {isSidebarOpenMobile && (
-          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
-        )}
-        <Sidebar {...sidebarProps} />
-        <main className="health-main">
-          <div className="view-header-bar">
-            <button
-              type="button"
-              className="sidebar-toggle-btn"
-              onClick={toggleSidebar}
-              title="Toggle Sidebar Menu"
-            >
-              ☰
-            </button>
-            <button
-              type="button"
-              className="btn-primary health-back"
-              onClick={() => navigateTo('dashboard', '/dashboard')}
-            >
-              ← Back to Dashboard
-            </button>
-          </div>
-          <FinancialHealth transactions={transactions} />
-        </main>
-      </div>
-    );
-  }
-
-  // Full-screen Budget Prediction page
-  if (activePage === 'budget') {
-    return (
-      <div className="budget-page">
-        {isSidebarOpenMobile && (
-          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
-        )}
-        <Sidebar {...sidebarProps} />
-        <main className="budget-main">
-          <div className="view-header-bar">
-            <button
-              type="button"
-              className="sidebar-toggle-btn"
-              onClick={toggleSidebar}
-              title="Toggle Sidebar Menu"
-            >
-              ☰
-            </button>
-            <button
-              type="button"
-              className="btn-primary budget-back"
-              onClick={() => navigateTo('dashboard', '/dashboard')}
-            >
-              ← Back to Dashboard
-            </button>
-          </div>
-          <BudgetPrediction transactions={transactions} />
-        </main>
-      </div>
-    );
-  }
-
-  // Isolated No-Spend Streak Heatmap page
-  if (activePage === 'nospend') {
-    return (
-      <div className="ns-page-wrapper">
-        {isSidebarOpenMobile && (
-          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
-        )}
-        <Sidebar {...sidebarProps} />
-        <main className="ns-main-container">
-          <div className="view-header-bar">
-            <button
-              type="button"
-              className="sidebar-toggle-btn"
-              onClick={toggleSidebar}
-              title="Toggle Sidebar Menu"
-            >
-              ☰
-            </button>
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={() => navigateTo('dashboard', '/dashboard')}
-            >
-              ← Back to Dashboard
-            </button>
-          </div>
-          <NoSpendHeatmap
-            transactions={transactions}
-            onAddExpense={addTransaction}
-          />
-        </main>
-      </div>
-    );
-  }
-
-  // Dedicated Money River (Sankey Flow) page
-  if (activePage === 'river') {
-    return (
-      <div className="money-river-page-wrapper">
-        {isSidebarOpenMobile && (
-          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
-        )}
-        <Sidebar {...sidebarProps} />
-        <main className="money-river-main">
-          <div className="view-header-bar">
-            <button
-              type="button"
-              className="sidebar-toggle-btn"
-              onClick={toggleSidebar}
-              title="Toggle Sidebar Menu"
-            >
-              ☰
-            </button>
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={() => navigateTo('dashboard', '/dashboard')}
-            >
-              ← Back to Dashboard
-            </button>
-          </div>
-          <MoneyRiver transactions={transactions} />
-        </main>
-      </div>
-    );
-  }
-
-  // Dedicated Money Jars (Savings Goals) page
-  if (activePage === 'jars') {
-    return (
-      <div className="jars-page-wrapper">
-        {isSidebarOpenMobile && (
-          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
-        )}
-        <Sidebar {...sidebarProps} />
-        <main className="jars-main">
-          <div className="view-header-bar">
-            <button
-              type="button"
-              className="sidebar-toggle-btn"
-              onClick={toggleSidebar}
-              title="Toggle Sidebar Menu"
-            >
-              ☰
-            </button>
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={() => navigateTo('dashboard', '/dashboard')}
-            >
-              ← Back to Dashboard
-            </button>
-          </div>
-          <Jars />
-        </main>
-      </div>
-    );
-  }
-
-  // Dedicated Split (Shared Bills) page
-  if (activePage === 'split') {
-    return (
-      <div className="split-page-wrapper">
-        {isSidebarOpenMobile && (
-          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
-        )}
-        <Sidebar {...sidebarProps} />
-        <main className="split-main">
-          <div className="view-header-bar">
-            <button
-              type="button"
-              className="sidebar-toggle-btn"
-              onClick={toggleSidebar}
-              title="Toggle Sidebar Menu"
-            >
-              ☰
-            </button>
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={() => navigateTo('dashboard', '/dashboard')}
-            >
-              ← Back to Dashboard
-            </button>
-          </div>
-          <Split />
-        </main>
-      </div>
-    );
-  }
-
-  // Dedicated Subscriptions page
-  if (activePage === 'subscriptions') {
-    return (
-      <div className="subscriptions-page-wrapper">
-        {isSidebarOpenMobile && (
-          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
-        )}
-        <Sidebar {...sidebarProps} />
-        <main className="subscriptions-main">
-          <div className="view-header-bar">
-            <button
-              type="button"
-              className="sidebar-toggle-btn"
-              onClick={toggleSidebar}
-              title="Toggle Sidebar Menu"
-            >
-              ☰
-            </button>
-            <button
-              type="button"
-              className="theme-toggle-btn"
-              onClick={toggleTheme}
-              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
-            >
-              {theme === 'dark' ? 'Light Theme' : 'Dark Theme'}
-            </button>
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={() => navigateTo('dashboard', '/dashboard')}
-            >
-              ← Back to Dashboard
-            </button>
-          </div>
-          <Subscriptions
-            onBackToDashboard={() => navigateTo('dashboard', '/dashboard')}
-            onToggleSidebar={toggleSidebar}
-          />
-        </main>
-      </div>
-    );
-  }
-
-  // Dedicated Transactions page
-  if (activePage === 'transactions') {
-    return (
-      <div className="transactions-page-wrapper">
-        {isSidebarOpenMobile && (
-          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
-        )}
-        <Sidebar {...sidebarProps} />
-        <main className="transactions-main">
-          <div className="view-header-bar">
-            <button
-              type="button"
-              className="sidebar-toggle-btn"
-              onClick={toggleSidebar}
-              title="Toggle Sidebar Menu"
-            >
-              ☰
-            </button>
-            <button
-              type="button"
-              className="theme-toggle-btn"
-              onClick={toggleTheme}
-              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
-            >
-              {theme === 'dark' ? 'Light Theme' : 'Dark Theme'}
-            </button>
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={() => navigateTo('dashboard', '/dashboard')}
-            >
-              ← Back to Dashboard
-            </button>
-          </div>
-          <TransactionsPage
-            onBackToDashboard={() => navigateTo('dashboard', '/dashboard')}
-            onToggleSidebar={toggleSidebar}
-          />
-        </main>
-      </div>
-    );
-  }
-
-  // Dedicated Instant Add page
-  if (activePage === 'instant-add') {
-    return (
-      <div className="instant-add-page-wrapper">
-        {isSidebarOpenMobile && (
-          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
-        )}
-        <Sidebar {...sidebarProps} />
-        <main className="instant-add-main">
-          <div className="view-header-bar">
-            <button
-              type="button"
-              className="sidebar-toggle-btn"
-              onClick={toggleSidebar}
-              title="Toggle Sidebar Menu"
-            >
-              ☰
-            </button>
-            <button
-              type="button"
-              className="theme-toggle-btn"
-              onClick={toggleTheme}
-              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
-            >
-              {theme === 'dark' ? 'Light Theme' : 'Dark Theme'}
-            </button>
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={() => navigateTo('dashboard', '/dashboard')}
-            >
-              ← Back to Dashboard
-            </button>
-          </div>
-
-          <div className="instant-add-view-content">
-            <div className="instant-add-hero-header">
-              <div className="instant-hero-badge">⚡ Instant Natural Language Add</div>
-              <h1 className="instant-hero-title">Type Like You Talk</h1>
-              <p className="instant-hero-desc">
-                Add income or expense transactions in seconds with smart auto-detection of amounts, dates, and categories.
-              </p>
-            </div>
-
-            <div className="instant-add-card">
-              <InstantAddBars onAddTransaction={addTransaction} />
-            </div>
-
-            <div className="instant-recent-section">
-              <LatestTransactions
-                transactions={transactions}
-                onDeleteTransaction={deleteTransaction}
-                onEditTransaction={updateTransaction}
-                onAddTransaction={openAddExpense}
-              />
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  // Dedicated Shortcuts Directory page
-  if (activePage === 'shortcuts') {
-    return (
-      <div className="shortcuts-page-wrapper">
-        {isSidebarOpenMobile && (
-          <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
-        )}
-        <Sidebar {...sidebarProps} />
-        <main className="shortcuts-page-main">
-          <ShortcutsPage
-            onBackToDashboard={() => navigateTo('dashboard', '/dashboard')}
-            onToggleSidebar={toggleSidebar}
-          />
-        </main>
-      </div>
-    );
-  }
-
-  return (
-    <div className="dashboard-container">
+  const renderWithSidebar = (pageClass, mainClass, content) => (
+    <div className={pageClass}>
       {isSidebarOpenMobile && (
         <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
       )}
-      {isAddExpenseOpen && (
-        <AddExpense
-          onClose={closeAddExpense}
-          defaultCategory={addExpenseDefaultCategory}
-        />
+      <Sidebar {...sidebarProps} />
+      <main className={mainClass}>
+        {content}
+      </main>
+    </div>
+  );
+
+  const renderDashboard = () => (
+    <div className="dashboard-container">
+      {isSidebarOpenMobile && (
+        <div className="sidebar-backdrop" onClick={() => setIsSidebarOpenMobile(false)} />
       )}
       <Sidebar {...sidebarProps} />
 
@@ -823,7 +350,6 @@ function App() {
         {/* Top Header */}
         <header className="dashboard-header">
           <div className="header-left">
-            {/* Universal Sidebar Toggle Icon Button */}
             <button
               type="button"
               className="sidebar-toggle-btn"
@@ -833,7 +359,6 @@ function App() {
               ☰
             </button>
 
-            {/* Top-Left Theme Changes Button */}
             <button
               type="button"
               className="theme-toggle-btn"
@@ -874,7 +399,6 @@ function App() {
         <div className="dashboard-grid">
           {/* Left / Middle Columns */}
           <div className="grid-left-col">
-            {/* Top 2 Cards: Score & Balance */}
             <div className="two-cards-row">
               <Panel title={t('Financial health score')} action={t('Read all')} onAction={() => navigateTo('health', '/health')}>
                 <div className="score-row">
@@ -915,7 +439,6 @@ function App() {
               </Panel>
             </div>
 
-            {/* Comprehensive 10 Spending Overview Category Cards */}
             <Panel title={t('Spending Overview')} action="Last 3 Months">
               <div className="spending-overview-grid">
                 {spendingCategories.map((cat) => (
@@ -924,7 +447,6 @@ function App() {
               </div>
             </Panel>
 
-            {/* AI Spending Insights */}
             <Panel title={t('AI spending insights')}>
               <ul className="insights-list">
                 {insights.map((text) => (
@@ -936,7 +458,6 @@ function App() {
               </ul>
             </Panel>
 
-            {/* Budget Prediction & Detected Subscriptions */}
             <div className="two-cards-row">
               <Panel title={t('Budget prediction')}>
                 <BudgetPrediction transactions={transactions} />
@@ -947,15 +468,15 @@ function App() {
                 action={t('Show more')}
                 onAction={() => navigateTo('subscriptions', '/subscriptions')}
               >
-              <div className="list-container">
-                {subscriptions.map((item) => (
-                  <ListRow
-                    key={item.id || item.name}
-                    {...item}
-                    onDelete={() => removeSubscription(item.id || item.name)}
-                  />
-                ))}
-              </div>
+                <div className="list-container">
+                  {subscriptions.map((item) => (
+                    <ListRow
+                      key={item.id || item.name}
+                      {...item}
+                      onDelete={() => removeSubscription(item.id || item.name)}
+                    />
+                  ))}
+                </div>
                 <p className="panel-footer-note">
                   Cancel 1 unused subscription to save ₹299 a month.
                 </p>
@@ -995,6 +516,543 @@ function App() {
         </div>
       </main>
     </div>
+  );
+
+  return (
+    <>
+      {isAddExpenseOpen && (
+        <AddExpense
+          onClose={closeAddExpense}
+          defaultCategory={addExpenseDefaultCategory}
+        />
+      )}
+      {isShortcutsModalOpen && (
+        <ShortcutsModal
+          isOpen={isShortcutsModalOpen}
+          onClose={closeShortcutsModal}
+        />
+      )}
+
+      <Routes>
+        {/* Public Landing */}
+        <Route
+          path="/"
+          element={
+            <HomePage
+              onNavigateToDashboard={() => {
+                if (!isLoggedIn) {
+                  navigateTo('login', '/login');
+                } else {
+                  navigateTo('dashboard', '/dashboard');
+                }
+              }}
+              onNavigateToLogin={() => navigateTo('login', '/login')}
+              onNavigateToScanner={() => {
+                if (!isLoggedIn) {
+                  navigateTo('login', '/login');
+                } else {
+                  navigateTo('scanner', '/receipt-scanner');
+                }
+              }}
+              onNavigateToAiCoach={() => {
+                if (!isLoggedIn) {
+                  navigateTo('login', '/login');
+                } else {
+                  navigateTo('aicoach', '/ai-coach');
+                }
+              }}
+              onLogout={logout}
+              theme={theme}
+              onToggleTheme={toggleTheme}
+              isLoggedIn={isLoggedIn}
+            />
+          }
+        />
+        <Route path="/home" element={<Navigate to="/" replace />} />
+
+        {/* Auth routes */}
+        <Route
+          path="/login"
+          element={
+            <PublicOnlyRoute>
+              <Login
+                onLogin={() => {
+                  setIsLoggedIn(true);
+                  navigateTo('dashboard', '/dashboard');
+                }}
+                onNavigateToCreateAccount={() => {
+                  setIsRegistering(true);
+                  navigateTo('register', '/register');
+                }}
+                onBackToHome={() => navigateTo('home', '/')}
+              />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicOnlyRoute>
+              <CreateAccount
+                onLogin={() => {
+                  setIsLoggedIn(true);
+                  setIsRegistering(false);
+                  navigateTo('dashboard', '/dashboard');
+                }}
+                onBackToLogin={() => {
+                  setIsRegistering(false);
+                  navigateTo('login', '/login');
+                }}
+                onBackToHome={() => navigateTo('home', '/')}
+              />
+            </PublicOnlyRoute>
+          }
+        />
+
+        {/* Authenticated Feature routes */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              {renderDashboard()}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/receipt-scanner"
+          element={
+            <ProtectedRoute>
+              {renderWithSidebar(
+                'receipt-scanner-page',
+                'receipt-scanner-main',
+                <ReceiptScanner
+                  onBackToDashboard={() => navigateTo('dashboard', '/dashboard')}
+                  onAddExpense={addTransaction}
+                  onToggleSidebar={toggleSidebar}
+                />
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/voice-finance"
+          element={
+            <ProtectedRoute>
+              {renderWithSidebar(
+                'voice-finance-page',
+                'voice-finance-main',
+                <VoiceFinancePage
+                  onBackToDashboard={() => navigateTo('dashboard', '/dashboard')}
+                  onToggleSidebar={toggleSidebar}
+                />
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ai-coach"
+          element={
+            <ProtectedRoute>
+              {renderWithSidebar(
+                'ai-coach-page',
+                'ai-coach-main',
+                <>
+                  <div className="view-header-bar">
+                    <button
+                      type="button"
+                      className="sidebar-toggle-btn"
+                      onClick={toggleSidebar}
+                      title="Toggle Sidebar Menu"
+                    >
+                      ☰
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-primary ai-coach-back"
+                      onClick={() => navigateTo('dashboard', '/dashboard')}
+                    >
+                      ← Back to Dashboard
+                    </button>
+                  </div>
+                  <AiCoach transactions={transactions} />
+                </>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/health"
+          element={
+            <ProtectedRoute>
+              {renderWithSidebar(
+                'health-page',
+                'health-main',
+                <>
+                  <div className="view-header-bar">
+                    <button
+                      type="button"
+                      className="sidebar-toggle-btn"
+                      onClick={toggleSidebar}
+                      title="Toggle Sidebar Menu"
+                    >
+                      ☰
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-primary health-back"
+                      onClick={() => navigateTo('dashboard', '/dashboard')}
+                    >
+                      ← Back to Dashboard
+                    </button>
+                  </div>
+                  <FinancialHealth transactions={transactions} />
+                </>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/budget"
+          element={
+            <ProtectedRoute>
+              {renderWithSidebar(
+                'budget-page',
+                'budget-main',
+                <>
+                  <div className="view-header-bar">
+                    <button
+                      type="button"
+                      className="sidebar-toggle-btn"
+                      onClick={toggleSidebar}
+                      title="Toggle Sidebar Menu"
+                    >
+                      ☰
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-primary budget-back"
+                      onClick={() => navigateTo('dashboard', '/dashboard')}
+                    >
+                      ← Back to Dashboard
+                    </button>
+                  </div>
+                  <BudgetPrediction transactions={transactions} />
+                </>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/no-spend"
+          element={
+            <ProtectedRoute>
+              {renderWithSidebar(
+                'ns-page-wrapper',
+                'ns-main-container',
+                <>
+                  <div className="view-header-bar">
+                    <button
+                      type="button"
+                      className="sidebar-toggle-btn"
+                      onClick={toggleSidebar}
+                      title="Toggle Sidebar Menu"
+                    >
+                      ☰
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={() => navigateTo('dashboard', '/dashboard')}
+                    >
+                      ← Back to Dashboard
+                    </button>
+                  </div>
+                  <NoSpendHeatmap
+                    transactions={transactions}
+                    onAddExpense={addTransaction}
+                  />
+                </>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/money-river"
+          element={
+            <ProtectedRoute>
+              {renderWithSidebar(
+                'money-river-page-wrapper',
+                'money-river-main',
+                <>
+                  <div className="view-header-bar">
+                    <button
+                      type="button"
+                      className="sidebar-toggle-btn"
+                      onClick={toggleSidebar}
+                      title="Toggle Sidebar Menu"
+                    >
+                      ☰
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={() => navigateTo('dashboard', '/dashboard')}
+                    >
+                      ← Back to Dashboard
+                    </button>
+                  </div>
+                  <MoneyRiver transactions={transactions} />
+                </>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/jars"
+          element={
+            <ProtectedRoute>
+              {renderWithSidebar(
+                'jars-page-wrapper',
+                'jars-main',
+                <>
+                  <div className="view-header-bar">
+                    <button
+                      type="button"
+                      className="sidebar-toggle-btn"
+                      onClick={toggleSidebar}
+                      title="Toggle Sidebar Menu"
+                    >
+                      ☰
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={() => navigateTo('dashboard', '/dashboard')}
+                    >
+                      ← Back to Dashboard
+                    </button>
+                  </div>
+                  <Jars />
+                </>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/split"
+          element={
+            <ProtectedRoute>
+              {renderWithSidebar(
+                'split-page-wrapper',
+                'split-main',
+                <>
+                  <div className="view-header-bar">
+                    <button
+                      type="button"
+                      className="sidebar-toggle-btn"
+                      onClick={toggleSidebar}
+                      title="Toggle Sidebar Menu"
+                    >
+                      ☰
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={() => navigateTo('dashboard', '/dashboard')}
+                    >
+                      ← Back to Dashboard
+                    </button>
+                  </div>
+                  <Split />
+                </>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/subscriptions"
+          element={
+            <ProtectedRoute>
+              {renderWithSidebar(
+                'subscriptions-page-wrapper',
+                'subscriptions-main',
+                <>
+                  <div className="view-header-bar">
+                    <button
+                      type="button"
+                      className="sidebar-toggle-btn"
+                      onClick={toggleSidebar}
+                      title="Toggle Sidebar Menu"
+                    >
+                      ☰
+                    </button>
+                    <button
+                      type="button"
+                      className="theme-toggle-btn"
+                      onClick={toggleTheme}
+                      title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+                    >
+                      {theme === 'dark' ? 'Light Theme' : 'Dark Theme'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={() => navigateTo('dashboard', '/dashboard')}
+                    >
+                      ← Back to Dashboard
+                    </button>
+                  </div>
+                  <Subscriptions
+                    onBackToDashboard={() => navigateTo('dashboard', '/dashboard')}
+                    onToggleSidebar={toggleSidebar}
+                  />
+                </>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/transactions"
+          element={
+            <ProtectedRoute>
+              {renderWithSidebar(
+                'transactions-page-wrapper',
+                'transactions-main',
+                <>
+                  <div className="view-header-bar">
+                    <button
+                      type="button"
+                      className="sidebar-toggle-btn"
+                      onClick={toggleSidebar}
+                      title="Toggle Sidebar Menu"
+                    >
+                      ☰
+                    </button>
+                    <button
+                      type="button"
+                      className="theme-toggle-btn"
+                      onClick={toggleTheme}
+                      title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+                    >
+                      {theme === 'dark' ? 'Light Theme' : 'Dark Theme'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={() => navigateTo('dashboard', '/dashboard')}
+                    >
+                      ← Back to Dashboard
+                    </button>
+                  </div>
+                  <TransactionsPage
+                    onBackToDashboard={() => navigateTo('dashboard', '/dashboard')}
+                    onToggleSidebar={toggleSidebar}
+                  />
+                </>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/instant-add"
+          element={
+            <ProtectedRoute>
+              {renderWithSidebar(
+                'instant-add-page-wrapper',
+                'instant-add-main',
+                <>
+                  <div className="view-header-bar">
+                    <button
+                      type="button"
+                      className="sidebar-toggle-btn"
+                      onClick={toggleSidebar}
+                      title="Toggle Sidebar Menu"
+                    >
+                      ☰
+                    </button>
+                    <button
+                      type="button"
+                      className="theme-toggle-btn"
+                      onClick={toggleTheme}
+                      title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+                    >
+                      {theme === 'dark' ? 'Light Theme' : 'Dark Theme'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={() => navigateTo('dashboard', '/dashboard')}
+                    >
+                      ← Back to Dashboard
+                    </button>
+                  </div>
+
+                  <div className="instant-add-view-content">
+                    <div className="instant-add-hero-header">
+                      <div className="instant-hero-badge">⚡ Instant Natural Language Add</div>
+                      <h1 className="instant-hero-title">Type Like You Talk</h1>
+                      <p className="instant-hero-desc">
+                        Add income or expense transactions in seconds with smart auto-detection of amounts, dates, and categories.
+                      </p>
+                    </div>
+
+                    <div className="instant-add-card">
+                      <InstantAddBars onAddTransaction={addTransaction} />
+                    </div>
+
+                    <div className="instant-recent-section">
+                      <LatestTransactions
+                        transactions={transactions}
+                        onDeleteTransaction={deleteTransaction}
+                        onEditTransaction={updateTransaction}
+                        onAddTransaction={openAddExpense}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/shortcuts"
+          element={
+            <ProtectedRoute>
+              {renderWithSidebar(
+                'shortcuts-page-wrapper',
+                'shortcuts-page-main',
+                <ShortcutsPage
+                  onBackToDashboard={() => navigateTo('dashboard', '/dashboard')}
+                  onToggleSidebar={toggleSidebar}
+                />
+              )}
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Aliases & Redirects */}
+        <Route path="/scanner" element={<Navigate to="/receipt-scanner" replace />} />
+        <Route path="/voice" element={<Navigate to="/voice-finance" replace />} />
+        <Route path="/aicoach" element={<Navigate to="/ai-coach" replace />} />
+        <Route path="/nospend" element={<Navigate to="/no-spend" replace />} />
+        <Route path="/calendar" element={<Navigate to="/no-spend" replace />} />
+        <Route path="/activity-calendar" element={<Navigate to="/no-spend" replace />} />
+        <Route path="/river" element={<Navigate to="/money-river" replace />} />
+        <Route path="/money-jars" element={<Navigate to="/jars" replace />} />
+        <Route path="/split-bill" element={<Navigate to="/split" replace />} />
+        <Route path="/split-bills" element={<Navigate to="/split" replace />} />
+        <Route path="/instant" element={<Navigate to="/instant-add" replace />} />
+        <Route path="/instant-bar" element={<Navigate to="/instant-add" replace />} />
+        <Route path="/keyboard-shortcuts" element={<Navigate to="/shortcuts" replace />} />
+        <Route path="/subscription" element={<Navigate to="/subscriptions" replace />} />
+        <Route path="/recurring" element={<Navigate to="/subscriptions" replace />} />
+        <Route path="/transaction" element={<Navigate to="/transactions" replace />} />
+        <Route path="/all-transactions" element={<Navigate to="/transactions" replace />} />
+
+        {/* 404 Catch-All */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
   );
 }
 
